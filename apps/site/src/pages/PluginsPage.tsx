@@ -85,28 +85,6 @@ const plugins = [
     alt: "Clipboard with one item checked off",
     features: ["Per-place checklists", "Private to your account", "Check off or reopen items"],
   },
-  {
-    id: "places.walk-bingo",
-    name: "Walk Bingo",
-    tagline: "How much can you spot on a walk?",
-    description:
-      "Deal a card before you head out. Mark the details you spot along the way, from a red door to a bird on a wire. Three in a row makes bingo.",
-    image: "walk-bingo.svg",
-    screenshot: "walk-bingo-desktop.png",
-    alt: "Nine-square bingo card with three green checks on a diagonal",
-    features: ["Random spotting cards", "Eight possible lines", "Resume in the same tab"],
-  },
-  {
-    id: "places.secret-landmark",
-    name: "Secret Landmark",
-    tagline: "One traveler missed the destination.",
-    description:
-      "Pass one phone around the table. Everyone but the traveler gets the same landmark. Trade clues aloud, then vote on who was bluffing.",
-    image: "secret-landmark.svg",
-    screenshot: "secret-landmark-desktop.png",
-    alt: "Two playing cards with a traveler’s mask and the Eiffel Tower",
-    features: ["3–8 players", "Private role cards", "Group vote and reveal"],
-  },
 ]
 
 export function PluginsPage() {
@@ -118,7 +96,7 @@ export function PluginsPage() {
           <h1>Your library. A few extra possibilities.</h1>
           <p className="lede">
             Optional plugins for the places you keep. Add the tools you need to your own Placard
-            instance to plan outings, remember visits or play a game together.
+            instance to plan outings, remember visits or choose where to go together.
           </p>
           <a href={`${ORGANIZATION}?q=module-&tab=repositories`} target="_blank" rel="noreferrer">
             Browse the module repositories on GitHub →
