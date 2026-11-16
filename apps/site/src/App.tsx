@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Link, Navigate, Route, Routes, useLocation } from "react-router"
 import { SiteChrome } from "./components/SiteChrome"
 import { pageMetadata, SITE_ORIGIN } from "./metadata"
@@ -7,8 +7,15 @@ import { DocsPage } from "./pages/DocsPage"
 import { HomePage } from "./pages/HomePage"
 import { PluginsPage } from "./pages/PluginsPage"
 
+declare global {
+  interface Window {
+    goatcounter?: { count?: (options: { referrer: string }) => void }
+  }
+}
+
 export function App() {
   const { pathname } = useLocation()
+  const previousPath = useRef(pathname)
   useEffect(() => {
     const meta = pageMetadata(pathname)
     document.title = meta.title
@@ -18,6 +25,11 @@ export function App() {
       document.head.appendChild(document.createElement("link"))
     canonical.setAttribute("rel", "canonical")
     canonical.setAttribute("href", `${SITE_ORIGIN}${meta.path}`)
+    // The analytics script counts the initial load. Count client-side navigation here.
+    if (previousPath.current !== pathname) {
+      window.goatcounter?.count?.({ referrer: new URL(previousPath.current, SITE_ORIGIN).href })
+      previousPath.current = pathname
+    }
   }, [pathname])
   return (
     <Routes>
