@@ -62,7 +62,8 @@ Some Place,,https://www.google.com/maps/place/Some+Place/data=!4m2!3m1!1s0xabc:0
 2. Empty lists (header + empty row only), including names like `Default list(1).csv`.
 3. URL variants:
    - Place link with `data=!4m2!3m1!1s0x…:0x…`
-   - Dropped pin: `/maps/search/<lat>,<lng>`
+   - Dropped pin: `/maps/search/<lat>,<lng>` or a coordinate pair in `query=` or `q=`
+   - Place link with explicit `!3d<lat>!4d<lng>` coordinates. The `@lat,lng` map camera alone does not locate a place.
 4. Unicode titles and occasional Notes.
 5. Tags / Comment usually empty in this export; still parse columns if present.
 
@@ -77,6 +78,8 @@ List file name (without `.csv`) becomes the Placard list name for kept entries.
 | Name + lat/lng | Medium → nearby / text search |
 | Name + address only | Lower → text search |
 | Unresolved (`[0,0]` / no location) | Manual review queue |
+
+During commit Placard groups rows with the same CID (including its hexadecimal representation in a feature ID). If the export supplies one unambiguous position, kept rows can share a single library place and retain all their list memberships. Conflicting positions require separate review. Review also lets you link a row to a saved place, search OpenStreetMap, or set its pin manually. Those actions work on earlier completed imports.
 
 Never call the Places API during the free triage step.
 

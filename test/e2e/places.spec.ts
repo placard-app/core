@@ -24,7 +24,7 @@ const searchFor = async (page: Page, text: string) => {
 
 test("without a Google key, a place is added by dropping a pin", async ({ page }) => {
   await openAdd(page)
-  await expect(page.getByText(/need a Google API key/)).toBeVisible()
+  await expect(page.getByLabel("Find on OpenStreetMap")).toBeVisible()
   await expect(page.getByRole("tab")).toHaveCount(0)
 
   await page.getByTestId("pin-map").click()
@@ -39,6 +39,33 @@ test("without a Google key, a place is added by dropping a pin", async ({ page }
   await page.getByText("Record details").click()
   await expect(page.getByText("Dropped pin", { exact: false })).toBeVisible()
   await expect(google).toHaveAttribute("href", /query=-?\d+\.\d+%2C-?\d+\.\d+/)
+})
+
+test("OpenStreetMap search previews a result before saving a pin", async ({ page }) => {
+  let calls = 0
+  await page.route("**/api/search/osm", (route) => {
+    calls++
+    expect(route.request().postDataJSON()).toEqual({ query: "Test cafe, Brussels" })
+    return route.fulfill({
+      json: [
+        {
+          name: "Test cafe",
+          address: "Brussels, Belgium",
+          kind: "cafe",
+          location: { lat: 50.85, lng: 4.35 },
+        },
+      ],
+    })
+  })
+  await openAdd(page)
+  await page.getByLabel("Find on OpenStreetMap").fill("Test cafe, Brussels")
+  expect(calls).toBe(0)
+  await page.getByRole("button", { name: "Search OpenStreetMap" }).click()
+  await page.getByRole("button", { name: /Test cafe.*Brussels/ }).click()
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Test cafe")
+  await expect(page.getByLabel("Address (optional)")).toHaveValue("Brussels, Belgium")
+  await expect(page.getByText(/^Pinned at /)).toContainText("50.85")
+  expect(calls).toBe(1)
 })
 
 test("with a key, a restaurant is added by typing its name", async ({ page }) => {

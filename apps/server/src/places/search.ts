@@ -1,7 +1,6 @@
 import {
   type EditableField,
   editableFields,
-  type OpeningHours,
   type Place,
   type PlaceCategory,
   type PlaceSource,
@@ -99,25 +98,6 @@ export class Search extends Context.Service<
                   list.push(row.list_id)
                   map.set(row.place_id, list)
                 }
-                return map
-              }),
-              Effect.orDie,
-            )
-
-      const loadHours = (placeIds: ReadonlyArray<string>) =>
-        placeIds.length === 0
-          ? Effect.succeed(new Map<string, OpeningHours>())
-          : sql<{ place_id: string; value: OpeningHours }>`
-              select distinct on (place_id) place_id, value
-              from place_facts
-              where ${sql.in("place_id", placeIds)}
-                and key = 'opening_hours'
-              order by place_id,
-                case when source = 'manual' then 0 else 1 end,
-                fetched_at desc`.pipe(
-              Effect.map((rows) => {
-                const map = new Map<string, OpeningHours>()
-                for (const row of rows) map.set(row.place_id, row.value)
                 return map
               }),
               Effect.orDie,
@@ -235,13 +215,12 @@ export class Search extends Context.Service<
                   Effect.orDie,
                 )
 
-          const [tagMap, listMap, factsMap, fieldsMap, hoursMap, thumbMap] = yield* Effect.all(
+          const [tagMap, listMap, factsMap, fieldsMap, thumbMap] = yield* Effect.all(
             [
               loadTags(ids),
               loadListIds(ids),
               loadFactsMap(sql, ids),
               loadCustomFieldsMap(sql, ids),
-              loadHours(ids),
               loadCoverThumbs,
             ],
             { concurrency: 6 },
@@ -250,7 +229,7 @@ export class Search extends Context.Service<
           const hits: SearchHit[] = []
           for (const row of rows) {
             const facts = factsMap.get(row.id) ?? emptyFacts()
-            const hours = hoursMap.get(row.id) ?? facts.openingHours
+            const hours = facts.openingHours
             if (filter.open === "now" && !isOpenAt(hours, row.utc_offset_minutes, now)) continue
             if (filter.open === "tonight" && !isOpenTonight(hours, row.utc_offset_minutes, now)) {
               continue
@@ -263,6 +242,7 @@ export class Search extends Context.Service<
               location: { lat: row.lat, lng: row.lng },
               address: row.address,
               googlePlaceId: row.google_place_id,
+              utcOffsetMinutes: row.utc_offset_minutes,
               status: row.status,
               notes: row.notes,
               source: row.source,

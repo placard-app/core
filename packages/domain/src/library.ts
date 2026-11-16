@@ -1,5 +1,5 @@
 import { Schema } from "effect"
-import { PlaceStatus } from "./places.ts"
+import { PlaceStatus, PlaceUpdate } from "./places.ts"
 
 const name = (max: number, message: string) =>
   Schema.Trim.pipe(
@@ -8,6 +8,20 @@ const name = (max: number, message: string) =>
   )
 
 export const TagName = name(50, "Give the tag a name")
+export const PlaceEdit = Schema.Struct({
+  ...PlaceUpdate.fields,
+  facts: Schema.optional(
+    Schema.Struct({
+      phone: Schema.optional(Schema.NullOr(Schema.String)),
+      website: Schema.optional(Schema.NullOr(Schema.String)),
+      cuisine: Schema.optional(Schema.NullOr(Schema.String)),
+      price_level: Schema.optional(Schema.NullOr(Schema.String)),
+    }),
+  ),
+  tags: Schema.optional(Schema.Array(TagName).pipe(Schema.check(Schema.isMaxLength(30)))),
+  listIds: Schema.optional(Schema.Array(Schema.String)),
+})
+export type PlaceEdit = typeof PlaceEdit.Type
 export const ListName = name(100, "Give the list a name")
 const Description = Schema.NullOr(Schema.Trim.pipe(Schema.check(Schema.isMaxLength(500))))
 

@@ -7,6 +7,19 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-16
+
+### Added
+
+- Edit weekly opening hours, including split shifts, overnight periods and 24-hour days. Opening-time filters use the place’s time zone.
+- Set the phone, website, cuisine and price range on a place without a Google API key.
+- Search OpenStreetMap by name and town when adding a place or resolving a Takeout entry.
+
+### Changed
+
+- Resolve entries in existing Takeout review queues by linking a saved place or dropping a pin. Keep the original lists, notes and Maps links.
+- New imports recognize more Maps coordinate formats and combine rows with matching identifiers and an unambiguous location.
+
 ## [1.0.2] — 2026-11-11
 
 ### Changed
@@ -138,3 +151,5 @@ First v0.1 release candidate after phases 0–10.
 [1.0.0]: https://github.com/placard-app/core/releases/tag/v1.0.0
 
 [1.0.2]: https://github.com/placard-app/core/releases/tag/v1.0.2
+
+[1.1.0]: https://github.com/placard-app/core/releases/tag/v1.1.0

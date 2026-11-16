@@ -27,9 +27,9 @@ export const PriceLevel = Schema.Literals(priceLevels)
 export type PriceLevel = typeof PriceLevel.Type
 
 const TimeOfDay = Schema.Struct({
-  day: Schema.Number.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 6 }))),
-  hour: Schema.Number.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 23 }))),
-  minute: Schema.Number.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 59 }))),
+  day: Schema.Int.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 6 }))),
+  hour: Schema.Int.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 23 }))),
+  minute: Schema.Int.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 59 }))),
 })
 
 /** Google's regularOpeningHours.periods shape, plus optional weekday lines for display. */
@@ -40,6 +40,8 @@ export const OpeningHours = Schema.Struct({
       close: Schema.optional(TimeOfDay),
     }),
   ),
+  timeZone: Schema.optional(Schema.String),
+  unknownDays: Schema.optional(Schema.Array(Schema.Int)),
   weekdayDescriptions: Schema.optional(Schema.Array(Schema.String)),
 })
 export type OpeningHours = typeof OpeningHours.Type
@@ -76,8 +78,35 @@ export const PlaceFacts = Schema.Struct({
 })
 export type PlaceFacts = typeof PlaceFacts.Type
 
+const ClockTime = Schema.String.pipe(Schema.check(Schema.isPattern(/^([01]\d|2[0-3]):[0-5]\d$/)))
+export const DayHours = Schema.Union([
+  Schema.Struct({ kind: Schema.Literal("unknown") }),
+  Schema.Struct({ kind: Schema.Literal("closed") }),
+  Schema.Struct({ kind: Schema.Literal("allDay") }),
+  Schema.Struct({
+    kind: Schema.Literal("intervals"),
+    intervals: Schema.Array(Schema.Struct({ start: ClockTime, end: ClockTime })).pipe(
+      Schema.check(Schema.isBetweenLength(1, 24)),
+    ),
+  }),
+])
+export type DayHours = typeof DayHours.Type
+
+export const WeeklyHours = Schema.Struct({
+  timeZone: Schema.NonEmptyString.pipe(Schema.check(Schema.isMaxLength(100))),
+  /** Sunday first, matching the existing periods format. */
+  days: Schema.Array(DayHours).pipe(Schema.check(Schema.isBetweenLength(7, 7))),
+})
+export type WeeklyHours = typeof WeeklyHours.Type
+
+export class InvalidFact extends Schema.TaggedError<InvalidFact>()(
+  "InvalidFact",
+  { message: Schema.String },
+  { httpApiStatus: 400 },
+) {}
+
 export const FactOverrideInput = Schema.Struct({
-  value: Schema.Union([Schema.String, Schema.Null]),
+  value: Schema.Union([Schema.String, WeeklyHours, Schema.Null]),
 })
 export type FactOverrideInput = typeof FactOverrideInput.Type
 

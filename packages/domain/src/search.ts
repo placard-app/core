@@ -42,3 +42,17 @@ export const SearchHit = Schema.Struct({
   distanceMeters: Schema.NullOr(Schema.Number),
 })
 export type SearchHit = typeof SearchHit.Type
+
+export const OsmCandidate = Schema.Struct({
+  name: Schema.String,
+  address: Schema.String,
+  location: LatLng,
+  kind: Schema.String,
+})
+export type OsmCandidate = typeof OsmCandidate.Type
+
+export class OsmLookupFailed extends Schema.TaggedError<OsmLookupFailed>()(
+  "OsmLookupFailed",
+  { message: Schema.String },
+  { httpApiStatus: 503 },
+) {}

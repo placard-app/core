@@ -1,10 +1,11 @@
 import "leaflet/dist/leaflet.css"
-import type { LatLng, PlaceCategory } from "@placard/domain"
+import type { ImportEntry, LatLng, PlaceCategory } from "@placard/domain"
 import { type FormEvent, useEffect, useId, useState } from "react"
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet"
 import { useNavigate } from "react-router"
 import { MapLocateBar } from "@/components/add/map-locate-bar"
 import { ErrorAlert } from "@/components/error-alert"
+import { OsmLookup } from "@/components/place/osm-lookup"
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -41,20 +42,31 @@ function Recenter({ start }: { readonly start: MapStart }) {
 }
 
 const parseCoord = (raw: string): number | null => {
+  if (!raw.trim()) return null
   const value = Number(raw.trim())
   return Number.isFinite(value) ? value : null
 }
 
 /** Drop a pin on an OpenStreetMap map and name it; needs no Google key. */
-export default function PinDropper() {
+type ReviewPin = {
+  readonly entry: ImportEntry
+  readonly busy: boolean
+  readonly onSave: (pin: { location: LatLng; name: string; address?: string }) => void
+}
+
+export default function PinDropper({ review }: { readonly review?: ReviewPin }) {
   const categoryGroups = useCategoryGroups()
   const navigate = useNavigate()
   const mapLabelId = useId()
   const { start, locating, message, locate, commitStart } = useMapStart()
-  const [location, setLocation] = useState<LatLng | null>(null)
-  const [name, setName] = useState("")
+  const initialPin = review?.entry.location
+  const [location, setLocation] = useState<LatLng | null>(initialPin ?? null)
+  useEffect(() => {
+    if (initialPin) commitStart({ center: initialPin, zoom: 15 }, { lock: true })
+  }, [commitStart, initialPin])
+  const [name, setName] = useState(review?.entry.name ?? "")
   const [category, setCategory] = useState<PlaceCategory | "">("")
-  const [address, setAddress] = useState("")
+  const [address, setAddress] = useState(review?.entry.address ?? "")
   const [coordLat, setCoordLat] = useState("")
   const [coordLng, setCoordLng] = useState("")
   const [coordError, setCoordError] = useState<string | null>(null)
@@ -84,7 +96,16 @@ export default function PinDropper() {
 
   const save = (event: FormEvent) => {
     event.preventDefault()
-    if (!location || !category) return
+    if (!location || !name.trim()) return
+    if (review) {
+      review.onSave({
+        location,
+        name: name.trim(),
+        ...(address.trim() && { address: address.trim() }),
+      })
+      return
+    }
+    if (!category) return
     setSaving(true)
     setError(null)
     api((c) =>
@@ -103,8 +124,16 @@ export default function PinDropper() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        For somewhere Google doesn’t list. Tap the map, or enter coordinates.
+        Search for a place, tap the map, or enter coordinates.
       </p>
+      <OsmLookup
+        initialQuery={[review?.entry.name, review?.entry.address].filter(Boolean).join(" ")}
+        onPick={(candidate) => {
+          dropPin(candidate.location)
+          if (!review?.entry.name) setName(candidate.name)
+          setAddress(candidate.address || review?.entry.address || "")
+        }}
+      />
       <MapLocateBar locating={locating} message={message} onLocate={locate} />
       <div data-testid="pin-map">
         <p id={mapLabelId} className="sr-only">
@@ -193,32 +222,34 @@ export default function PinDropper() {
                 autoFocus
               />
             </Field>
-            <Field>
-              <FieldLabel htmlFor="pin-type">Type</FieldLabel>
-              <Select
-                value={category || undefined}
-                onValueChange={(v) => {
-                  setCategory(v)
-                }}
-                required
-              >
-                <SelectTrigger id="pin-type" className="w-56">
-                  <SelectValue placeholder="Choose type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryGroups.map((group) => (
-                    <SelectGroup key={group.label}>
-                      <SelectLabel>{group.label}</SelectLabel>
-                      {group.values.map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {categoryLabel(value)}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+            {!review && (
+              <Field>
+                <FieldLabel htmlFor="pin-type">Type</FieldLabel>
+                <Select
+                  value={category || undefined}
+                  onValueChange={(v) => {
+                    setCategory(v)
+                  }}
+                  required
+                >
+                  <SelectTrigger id="pin-type" className="w-56">
+                    <SelectValue placeholder="Choose type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryGroups.map((group) => (
+                      <SelectGroup key={group.label}>
+                        <SelectLabel>{group.label}</SelectLabel>
+                        {group.values.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {categoryLabel(value)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
             <Field>
               <FieldLabel htmlFor="pin-address">Address (optional)</FieldLabel>
               <Input
@@ -229,8 +260,12 @@ export default function PinDropper() {
             </Field>
           </FieldGroup>
           <ErrorAlert message={error} />
-          <Button type="submit" disabled={saving || !name.trim() || !category} className="w-fit">
-            {saving ? "Saving…" : "Save place"}
+          <Button
+            type="submit"
+            disabled={saving || review?.busy || !name.trim() || (!review && !category)}
+            className="w-fit"
+          >
+            {saving || review?.busy ? "Saving…" : review ? "Save import pin" : "Save place"}
           </Button>
         </form>
       )}

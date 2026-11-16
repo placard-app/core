@@ -123,6 +123,11 @@ export const resolveFacts = (
       byKey.set(row.key, { value: row.value, fromGoogle: true })
     }
   }
+  for (const row of rows) {
+    if (row.source === "takeout" && !byKey.has(row.key)) {
+      byKey.set(row.key, { value: row.value, fromGoogle: false })
+    }
+  }
   const get = <T>(key: FactKey): T | null => (byKey.get(key)?.value as T | undefined) ?? null
   return {
     openingHours: get("opening_hours"),

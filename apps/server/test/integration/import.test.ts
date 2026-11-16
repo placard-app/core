@@ -180,6 +180,108 @@ layer(ImportTestLayer, { concurrent: false, timeout: 120_000 })("takeout import"
       ).toBe(true)
     }),
   )
+  it.effect("resolves exact matches, saved places and manual pins without a Google key", () =>
+    run(async (_app, work) => {
+      const browser = admin.browser
+      await browser.send("DELETE", "/api/admin/settings/google-api-key")
+      const sourceLink = "https://www.google.com/maps/place/Diner/data=!1s0x123:0x2a"
+      const csv = [
+        "Title,Note,URL,Tags,Comment",
+        `Diner,Lunch break,${sourceLink},,`,
+        "Already saved,Try the soup,https://maps.google.com/?cid=85,,",
+        "Diner,Reservation required,https://maps.google.com/?cid=86,,",
+        'Weak pin,Call first,"https://www.google.com/maps/search/48,4",,',
+      ].join("\n")
+      const files = [
+        { path: "Saved/Lunch.csv", text: csv },
+        {
+          path: "Saved Places.json",
+          text: JSON.stringify({
+            features: [
+              {
+                geometry: { coordinates: [4.35, 50.85] },
+                properties: {
+                  google_maps_url: "https://maps.google.com/?cid=42",
+                  location: { name: "Diner", address: "Brussels" },
+                },
+              },
+            ],
+          }),
+        },
+      ]
+      const started = await browser.send("POST", "/api/import/runs", { kind: "files", files })
+      const route = `/api/import/runs/${started.body.id}`
+      await work(IMPORT_PARSE)
+      const pending = await browser.send("POST", `${route}/entries`, {})
+      await browser.send("POST", `${route}/decisions`, {
+        entryIds: pending.body.map((entry: { id: string }) => entry.id),
+        decision: "keep",
+      })
+      await browser.send("POST", `${route}/commit`)
+      await work(IMPORT_COMMIT)
+      const committed = await browser.get(route)
+      expect(committed.body.counts).toMatchObject({ matched: 2, needsReview: 3 })
+      const library = await browser.get("/api/places")
+      expect(library.body).toHaveLength(2)
+      const diner = library.body.find((p: { name: string }) => p.name === "Diner")
+      expect(diner).toMatchObject({
+        name: "Diner",
+        address: "Brussels",
+        notes: "Lunch break",
+      })
+      expect(diner.customFields.map((f: { value: string }) => f.value)).toContain(sourceLink)
+
+      const existing = await browser.send("POST", "/api/places/manual", {
+        name: "Already saved",
+        location: { lat: 51, lng: 5 },
+        category: "restaurant",
+        address: null,
+      })
+      const existingId = existing.body.place.id
+      await browser.send("PATCH", `/api/places/${existingId}`, { notes: "My original note" })
+      const review = await browser.send("POST", `${route}/entries`, { matchStatus: "needs_review" })
+      const linkId = review.body.find((e: { name: string }) => e.name === "Already saved").id
+      const pinId = review.body.find((e: { name: string }) => e.name === "Diner").id
+      const weak = review.body.find((e: { name: string }) => e.name === "Weak pin")
+      const move = await browser.send("POST", `${route}/entries/${weak.id}/resolve`, {
+        location: { lat: 48.1, lng: 4.1 },
+      })
+      expect(move.status).toBe(200)
+      expect((await browser.get(`/api/places/${weak.placeId}`)).body).toMatchObject({
+        name: "Weak pin",
+        notes: "Call first",
+        location: { lat: 48.1, lng: 4.1 },
+      })
+      const link = `${route}/entries/${linkId}/resolve`
+      expect((await browser.send("POST", link, { placeId: "missing" })).status).toBe(400)
+      expect((await browser.send("POST", link, { placeId: existingId })).status).toBe(200)
+      const linked = await browser.get(`/api/places/${existingId}`)
+      expect(linked.body.notes).toBe("My original note\n\nTry the soup")
+      expect(linked.body.listIds).toEqual(diner.listIds)
+      expect(linked.body.customFields[0].value).toBe("https://maps.google.com/?cid=85")
+      const pin = `${route}/entries/${pinId}/resolve`
+      const attempts = await Promise.all(
+        [1, 2].map(() =>
+          browser.send("POST", pin, { name: "New pin", location: { lat: 49, lng: 3 } }),
+        ),
+      )
+      expect(attempts.map((r) => r.status).sort()).toEqual([200, 400])
+      expect((await browser.get(route)).body.counts.needsReview).toBe(0)
+      const all = await browser.get("/api/places")
+      expect(all.body).toHaveLength(4)
+      expect(all.body.find((p: { name: string }) => p.name === "New pin")).toMatchObject({
+        source: "takeout",
+        location: { lat: 49, lng: 3 },
+        notes: "Reservation required",
+        listIds: diner.listIds,
+      })
+      await browser.send("POST", `${route}/undo`, { confirmEdited: true })
+      expect((await browser.get("/api/places")).body.map((p: { id: string }) => p.id)).toEqual([
+        existingId,
+      ])
+    }),
+  )
+
   it.effect("invalid archives fail in the worker and expose a useful error", () =>
     run(async (_app, work) => {
       const started = await admin.browser.send("POST", "/api/import/runs", {

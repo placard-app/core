@@ -52,6 +52,7 @@ interface PlaceRow {
   readonly lat: number
   readonly lng: number
   readonly address: string | null
+  readonly utc_offset_minutes: number | null
   readonly google_place_id: string | null
   readonly status: PlaceStatus | null
   readonly notes: string | null
@@ -185,7 +186,7 @@ export class Places extends Context.Service<
       const columns = sql`
         places.id, places.name, places.category,
         st_y(places.location::geometry) as lat, st_x(places.location::geometry) as lng,
-        places.address, places.google_place_id, places.status, places.notes, places.source,
+        places.address, places.utc_offset_minutes, places.google_place_id, places.status, places.notes, places.source,
         places.visibility, places.owner_id, u.name as owner_name,
         places.manual_fields, places.cover_media_id,
         places.created_at, places.deleted_at`
@@ -281,6 +282,7 @@ export class Places extends Context.Service<
               location: { lat: row.lat, lng: row.lng },
               address: row.address,
               googlePlaceId: row.google_place_id,
+              utcOffsetMinutes: row.utc_offset_minutes,
               status: row.status,
               notes: row.notes,
               source: row.source,

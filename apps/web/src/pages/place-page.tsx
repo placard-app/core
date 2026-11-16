@@ -410,7 +410,7 @@ export function PlacePage() {
         }}
       />
 
-      <PlaceFactsSection place={place} />
+      <PlaceFactsSection key={place.id} place={place} onSaved={isOwner ? setData : undefined} />
 
       <PlaceModuleSections placeId={place.id} category={place.category} isOwner={isOwner} />
 

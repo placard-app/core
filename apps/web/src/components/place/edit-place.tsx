@@ -1,4 +1,10 @@
-import type { Place, PlaceCategory, PlaceList, PlaceStatus } from "@placard/domain"
+import {
+  type Place,
+  type PlaceCategory,
+  type PlaceList,
+  type PlaceStatus,
+  priceLevels,
+} from "@placard/domain"
 import { type FormEvent, useEffect, useState } from "react"
 import { ErrorAlert } from "@/components/error-alert"
 import { Button } from "@/components/ui/button"
@@ -33,6 +39,9 @@ export function EditPlace({
   const [address, setAddress] = useState(place.address ?? "")
   const [notes, setNotes] = useState(place.notes ?? "")
   const [phone, setPhone] = useState(place.facts.phone ?? "")
+  const [website, setWebsite] = useState(place.facts.website ?? "")
+  const [cuisine, setCuisine] = useState(place.facts.cuisine ?? "")
+  const [price, setPrice] = useState<string>(place.facts.priceLevel ?? "")
   const [status, setStatus] = useState<PlaceStatus | "none">(place.status ?? "none")
   const [tagNames, setTagNames] = useState(place.tags.map((t) => t.name).join(", "))
   const [listIds, setListIds] = useState<ReadonlySet<string>>(new Set(place.listIds))
@@ -45,6 +54,9 @@ export function EditPlace({
     setAddress(place.address ?? "")
     setNotes(place.notes ?? "")
     setPhone(place.facts.phone ?? "")
+    setWebsite(place.facts.website ?? "")
+    setCuisine(place.facts.cuisine ?? "")
+    setPrice(place.facts.priceLevel ?? "")
     setStatus(place.status ?? "none")
     setTagNames(place.tags.map((t) => t.name).join(", "))
     setListIds(new Set(place.listIds))
@@ -66,32 +78,36 @@ export function EditPlace({
       .split(",")
       .map((n) => n.trim())
       .filter(Boolean)
-    const phoneValue = phone.trim() || null
+    const editedFacts = [
+      ["phone", phone, place.facts.phone],
+      ["website", website, place.facts.website],
+      ["cuisine", cuisine, place.facts.cuisine],
+      ["price_level", price, place.facts.priceLevel],
+    ] as const
     void (async () => {
       try {
-        await api((c) =>
+        const facts = Object.fromEntries(
+          editedFacts.flatMap(([key, input, previous]) => {
+            const value = input.trim() || null
+            return value === previous ? [] : [[key, value]]
+          }),
+        )
+        const next = await api((c) =>
           c.places.update({
             params: { id: place.id },
             payload: {
-              name,
-              category,
-              address: address.trim() || null,
-              notes: notes.trim() || null,
-              status: status === "none" ? null : status,
+              ...(name !== place.name && { name }),
+              ...(category !== place.category && { category }),
+              ...(address.trim() !== (place.address ?? "") && { address: address.trim() || null }),
+              ...(notes.trim() !== (place.notes ?? "") && { notes: notes.trim() || null }),
+              ...(status !== (place.status ?? "none") && {
+                status: status === "none" ? null : status,
+              }),
+              facts,
+              ...(tagNames !== place.tags.map((t) => t.name).join(", ") && { tags: names }),
+              ...((listIds.size !== place.listIds.length ||
+                place.listIds.some((id) => !listIds.has(id))) && { listIds: [...listIds] }),
             },
-          }),
-        )
-        await api((c) =>
-          c.places.setFact({
-            params: { id: place.id, key: "phone" },
-            payload: { value: phoneValue },
-          }),
-        )
-        await api((c) => c.places.setTags({ params: { id: place.id }, payload: { names } }))
-        const next = await api((c) =>
-          c.places.setLists({
-            params: { id: place.id },
-            payload: { listIds: [...listIds] },
           }),
         )
         onSaved(next)
@@ -114,7 +130,7 @@ export function EditPlace({
           Edit
         </h2>
         <p className="text-xs text-muted-foreground">
-          Your phone number survives a refresh from Google.
+          Your edits are kept when Google details are refreshed.
         </p>
       </div>
 
@@ -159,11 +175,51 @@ export function EditPlace({
           <FieldLabel htmlFor="place-phone">Phone</FieldLabel>
           <Input
             id="place-phone"
+            type="tel"
+            maxLength={100}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Not set"
             className="max-w-xs"
           />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="place-website">Website</FieldLabel>
+          <Input
+            id="place-website"
+            maxLength={2048}
+            type="url"
+            pattern="https?://.+"
+            placeholder="https://"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="place-cuisine">Cuisine</FieldLabel>
+          <Input
+            id="place-cuisine"
+            maxLength={200}
+            value={cuisine}
+            onChange={(e) => setCuisine(e.target.value)}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="place-price">Price range</FieldLabel>
+          <select
+            id="place-price"
+            className="w-fit rounded-md border bg-background px-3 py-2 text-sm"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          >
+            <option value="">Unspecified</option>
+            {priceLevels.map((level) => (
+              <option key={level} value={level}>
+                {level[0]?.toUpperCase()}
+                {level.slice(1).replaceAll("_", " ")}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field>
           <FieldLabel htmlFor="place-notes">Notes</FieldLabel>

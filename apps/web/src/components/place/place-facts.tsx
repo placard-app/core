@@ -1,6 +1,8 @@
 import type { Place } from "@placard/domain"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
+
+import { OpeningHoursEditor } from "./opening-hours-editor"
 
 const priceLabels: Record<string, string> = {
   free: "Free",
@@ -10,10 +12,17 @@ const priceLabels: Record<string, string> = {
   very_expensive: "Very expensive",
 }
 
-export function PlaceFactsSection({ place }: { readonly place: Place }) {
+export function PlaceFactsSection({
+  place,
+  onSaved,
+}: {
+  readonly place: Place
+  readonly onSaved?: ((place: Place) => void) | undefined
+}) {
   const { facts } = place
   const weekday = facts.openingHours?.weekdayDescriptions
-  const hours = useMemo(() => splitHours(weekday), [weekday])
+  const hours = splitHours(weekday, facts.openingHours?.timeZone, place.utcOffsetMinutes ?? 0)
+  const [editingHours, setEditingHours] = useState(false)
   const [hoursOpen, setHoursOpen] = useState(false)
 
   const hasFacts =
@@ -24,7 +33,7 @@ export function PlaceFactsSection({ place }: { readonly place: Place }) {
     facts.cuisine ||
     (weekday && weekday.length > 0)
 
-  if (!hasFacts) return null
+  if (!hasFacts && !onSaved) return null
 
   return (
     <section className="flex flex-col gap-4 border-t pt-6">
@@ -44,6 +53,27 @@ export function PlaceFactsSection({ place }: { readonly place: Place }) {
           </p>
         )}
       </div>
+      {onSaved && !editingHours && (
+        <Button
+          className="w-fit"
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setEditingHours(true)}
+        >
+          {facts.openingHours ? "Edit hours" : "Add hours"}
+        </Button>
+      )}
+      {onSaved && editingHours && (
+        <OpeningHoursEditor
+          place={place}
+          onCancel={() => setEditingHours(false)}
+          onSaved={(next) => {
+            setEditingHours(false)
+            onSaved(next)
+          }}
+        />
+      )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         {facts.cuisine && (
           <>
@@ -154,12 +184,20 @@ function friendlyWebsite(url: string): string {
   }
 }
 
-function splitHours(descs: ReadonlyArray<string> | null | undefined): {
+function splitHours(
+  descs: ReadonlyArray<string> | null | undefined,
+  timeZone: string | undefined,
+  utcOffsetMinutes: number,
+): {
   readonly today: string | null
   readonly rest: ReadonlyArray<string>
 } {
   if (!descs || descs.length === 0) return { today: null, rest: [] }
-  const day = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date())
+  const instant = timeZone ? Date.now() : Date.now() + utcOffsetMinutes * 60_000
+  const day = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: timeZone ?? "UTC",
+  }).format(instant)
   const today = descs.find((line) => line.toLowerCase().startsWith(day.toLowerCase())) ?? null
   return { today, rest: descs.filter((line) => line !== today) }
 }

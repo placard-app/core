@@ -1,13 +1,10 @@
 import { lazy, Suspense, useCallback } from "react"
-import { Link } from "react-router"
 import { SearchAdd } from "@/components/add/search-add"
 import { ErrorAlert } from "@/components/error-alert"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
 import { useLoad } from "@/lib/use-load"
-import { useMe } from "@/session"
 
 const GoogleMapPicker = lazy(() => import("@/components/add/google-map-picker"))
 const PinDropper = lazy(() => import("@/components/add/pin-dropper"))
@@ -18,7 +15,6 @@ const tabTriggerClass =
   "data-active:bg-[color-mix(in_srgb,var(--spine-gold)_28%,var(--parchment))] data-active:text-[var(--crate)] data-active:shadow-none"
 
 export function AddPlacePage() {
-  const me = useMe()
   const { data: config, error } = useLoad(useCallback(() => api((c) => c.google.config()), []))
 
   return (
@@ -27,10 +23,6 @@ export function AddPlacePage() {
         <h1 className="font-catalog text-4xl font-semibold tracking-wide uppercase sm:text-5xl">
           Add a place
         </h1>
-        <p className="max-w-prose text-sm text-muted-foreground">
-          Prefer Search when you know the name. Map picks a Google place; Drop pin is for spots
-          Google misses.
-        </p>
       </div>
       <ErrorAlert message={error} />
       {config === null ? (
@@ -66,26 +58,9 @@ export function AddPlacePage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <>
-          <Alert>
-            <AlertDescription>
-              {me.role === "admin" ? (
-                <span>
-                  Searching Google and picking places on its map need a Google API key.{" "}
-                  <Link to="/settings/integrations" className="underline underline-offset-4">
-                    Add one in Settings → Integrations
-                  </Link>
-                  .
-                </span>
-              ) : (
-                "Searching Google needs a Google API key. Until your admin adds one, drop a pin."
-              )}
-            </AlertDescription>
-          </Alert>
-          <Suspense fallback={mapFallback}>
-            <PinDropper />
-          </Suspense>
-        </>
+        <Suspense fallback={mapFallback}>
+          <PinDropper />
+        </Suspense>
       )}
     </section>
   )

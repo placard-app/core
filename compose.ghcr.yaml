@@ -15,6 +15,7 @@ x-placard-env: &placard-env
   MEDIA_DIR: /data/media
   PLACARD_MODULES_DIR: /data/modules
   WEB_DIST_DIR: /app/web-dist
+  PLACARD_PHOTON_URL: ${PLACARD_PHOTON_URL:-https://photon.komoot.io/api/}
   GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
   MCP_ENABLED: ${MCP_ENABLED:-true}
   PORT: "3000"
