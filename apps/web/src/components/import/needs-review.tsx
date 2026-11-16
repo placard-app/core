@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
+import type { ImportResolveInput } from "@placard/domain"
+import { lazy, Suspense, useCallback, useEffect, useState } from "react"
 import { Link } from "react-router"
 import { ErrorAlert } from "@/components/error-alert"
 import { Button } from "@/components/ui/button"
@@ -7,7 +8,13 @@ import { api, errorMessage } from "@/lib/api"
 import { useLoad } from "@/lib/use-load"
 
 import { listLabel } from "./entry-labels"
+import { ReviewLibrarySearch } from "./review-library-search"
+
+const PinDropper = lazy(() => import("@/components/add/pin-dropper"))
+type ReviewAction = "library" | "pin" | "google"
+
 export function NeedsReviewSection({
+  hasGoogleKey,
   runId,
   matched,
   needsReview,
@@ -16,6 +23,7 @@ export function NeedsReviewSection({
   setError,
   onChanged,
 }: {
+  readonly hasGoogleKey: boolean
   readonly runId: string
   readonly matched: number
   readonly needsReview: number
@@ -34,8 +42,10 @@ export function NeedsReviewSection({
       ),
     [runId],
   )
-  const { data: reviewEntries, reload } = useLoad(loadReview)
-  const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const { data: reviewEntries, error: loadError, reload } = useLoad(loadReview)
+  const [open, setOpen] = useState<{ id: string; action: ReviewAction } | null>(null)
+  const toggleAction = (id: string, action: ReviewAction) =>
+    setOpen((current) => (current?.id === id && current.action === action ? null : { id, action }))
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
 
   const entries = reviewEntries ?? []
@@ -48,7 +58,7 @@ export function NeedsReviewSection({
     setError(null)
     try {
       await action()
-      setResolvingId(null)
+      setOpen(null)
       setSelected(new Set())
       await Promise.all([reload(), onChanged()])
     } catch (cause) {
@@ -57,6 +67,9 @@ export function NeedsReviewSection({
       setBusy(false)
     }
   }
+
+  const resolve = (entryId: string, payload: ImportResolveInput) =>
+    void act(() => api((c) => c.import.resolveReview({ params: { id: runId, entryId }, payload })))
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -102,13 +115,13 @@ export function NeedsReviewSection({
         </Link>
       </p>
 
+      <ErrorAlert message={loadError} />
       {needsReview > 0 && (
         <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
           <div>
             <h2 className="text-lg font-medium">Needs review</h2>
             <p className="text-xs text-muted-foreground">
-              These kept entries had no reliable location or Google match. Search Google to place
-              them, accept a weak pin if one was created, or skip.
+              Link an entry to a saved place, choose its location on the map, or skip it.
             </p>
           </div>
           {entries.length > 0 && (
@@ -195,12 +208,31 @@ export function NeedsReviewSection({
                       size="sm"
                       variant="outline"
                       disabled={busy}
-                      onClick={() =>
-                        setResolvingId((current) => (current === entry.id ? null : entry.id))
-                      }
+                      aria-expanded={open?.id === entry.id && open.action === "library"}
+                      onClick={() => toggleAction(entry.id, "library")}
                     >
-                      {resolvingId === entry.id ? "Hide search" : "Find on Google"}
+                      Link to a saved place
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      aria-expanded={open?.id === entry.id && open.action === "pin"}
+                      onClick={() => toggleAction(entry.id, "pin")}
+                    >
+                      Drop a pin
+                    </Button>
+                    {hasGoogleKey && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        aria-expanded={open?.id === entry.id && open.action === "google"}
+                        onClick={() => toggleAction(entry.id, "google")}
+                      >
+                        Find on Google
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="ghost"
@@ -219,22 +251,31 @@ export function NeedsReviewSection({
                     </Button>
                   </div>
                 </div>
-                {resolvingId === entry.id && (
+                {open?.id === entry.id && (
                   <div className="mt-3 border-t border-border pt-3">
-                    <ReviewGoogleSearch
-                      initialQuery={entry.name ?? ""}
-                      disabled={busy}
-                      onPick={(googlePlaceId, sessionToken) =>
-                        void act(() =>
-                          api((c) =>
-                            c.import.resolveReview({
-                              params: { id: runId, entryId: entry.id },
-                              payload: { googlePlaceId, sessionToken },
-                            }),
-                          ),
-                        )
-                      }
-                    />
+                    {open.action === "library" && (
+                      <ReviewLibrarySearch
+                        entry={entry}
+                        busy={busy}
+                        onPick={(placeId) => resolve(entry.id, { placeId })}
+                      />
+                    )}
+                    {open.action === "pin" && (
+                      <Suspense fallback={<p role="status">Loading map…</p>}>
+                        <PinDropper
+                          review={{ entry, busy, onSave: (pin) => resolve(entry.id, pin) }}
+                        />
+                      </Suspense>
+                    )}
+                    {open.action === "google" && (
+                      <ReviewGoogleSearch
+                        initialQuery={entry.name ?? ""}
+                        disabled={busy}
+                        onPick={(googlePlaceId, sessionToken) =>
+                          resolve(entry.id, { googlePlaceId, sessionToken })
+                        }
+                      />
+                    )}
                   </div>
                 )}
               </li>

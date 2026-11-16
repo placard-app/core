@@ -37,6 +37,7 @@ import {
   FactKey,
   FactNotFound,
   FactOverrideInput,
+  InvalidFact,
   PlaceRefreshInput,
   RefreshAllPlan,
 } from "./facts.ts"
@@ -60,6 +61,7 @@ import {
   ListNotFound,
   ListUpdate,
   NameTaken,
+  PlaceEdit,
   PlaceIds,
   PlaceList,
   TagName,
@@ -105,12 +107,11 @@ import {
   PlaceNotFound,
   PlacePreview,
   PlaceSuggestion,
-  PlaceUpdate,
   PlaceVisibilityUpdate,
   SavedPlace,
   TagRef,
 } from "./places.ts"
-import { SearchFilter, SearchHit } from "./search.ts"
+import { OsmCandidate, OsmLookupFailed, SearchFilter, SearchHit } from "./search.ts"
 import { ApiToken, CreatedToken, CreateTokenInput, McpStatus, TokenNotFound } from "./tokens.ts"
 
 export class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
@@ -240,9 +241,9 @@ export class PlacesApi extends HttpApiGroup.make("places")
     }),
     HttpApiEndpoint.patch("update", "/:id", {
       params: { id: Schema.String },
-      payload: PlaceUpdate,
+      payload: PlaceEdit,
       success: Place,
-      error: PlaceNotFound,
+      error: [PlaceNotFound, ListNotFound, InvalidFact],
     }),
     HttpApiEndpoint.put("setTags", "/:id/tags", {
       params: { id: Schema.String },
@@ -282,7 +283,7 @@ export class PlacesApi extends HttpApiGroup.make("places")
       params: { id: Schema.String, key: FactKey },
       payload: FactOverrideInput,
       success: Place,
-      error: [PlaceNotFound, FactNotFound],
+      error: [PlaceNotFound, FactNotFound, InvalidFact],
     }),
     HttpApiEndpoint.delete("clearFactOverride", "/:id/facts/:key", {
       params: { id: Schema.String, key: FactKey },
@@ -404,6 +405,13 @@ export class GoogleApi extends HttpApiGroup.make("google")
 /** Structured library search — one filter Schema for UI, API, and MCP. */
 export class SearchApi extends HttpApiGroup.make("search")
   .add(
+    HttpApiEndpoint.post("osm", "/osm", {
+      payload: Schema.Struct({
+        query: Schema.Trim.pipe(Schema.check(Schema.isBetweenLength(2, 200))),
+      }),
+      success: Schema.Array(OsmCandidate),
+      error: OsmLookupFailed,
+    }),
     HttpApiEndpoint.post("query", "/", {
       payload: SearchFilter,
       success: Schema.Array(SearchHit),

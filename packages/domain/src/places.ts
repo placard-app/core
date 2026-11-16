@@ -92,6 +92,7 @@ export const Place = Schema.Struct({
   location: LatLng,
   address: Schema.NullOr(Schema.String),
   googlePlaceId: Schema.NullOr(Schema.String),
+  utcOffsetMinutes: Schema.optional(Schema.NullOr(Schema.Int)),
   status: Schema.NullOr(PlaceStatus),
   notes: Schema.NullOr(Schema.String),
   source: PlaceSource,

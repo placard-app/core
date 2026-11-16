@@ -46,7 +46,7 @@ export const PlacesApiLive = HttpApiBuilder.group(
       )
       .handle("addManual", ({ payload }) => withMe((me) => places.addManual(me.id, payload)))
       .handle("update", ({ params, payload }) =>
-        withMe((me) => places.update(me.id, params.id, payload)),
+        withMe((me) => enrichment.edit(me.id, params.id, payload)),
       )
       .handle("setTags", ({ params, payload }) =>
         withMe((me) => places.setTags(me.id, params.id, payload.names)),

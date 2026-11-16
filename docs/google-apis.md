@@ -18,11 +18,13 @@ CRUD, Takeout triage, OSM pin-drop, and MCP work **without** a Google key. See [
 
 | Feature | Without key | With key |
 | --- | --- | --- |
-| Add place by name (autocomplete) | — | Places Autocomplete (New) |
+| Add place by name | OpenStreetMap search by name and area | Places Autocomplete (New), plus OpenStreetMap in Drop pin |
 | Click a POI on the Add map | OSM pin only | Maps JavaScript + Place ID |
 | Enrichment (hours, phone, website, rating, cover) | Manual / empty | Place Details (New) + photo media |
-| Takeout import matching | Name/coords only | Text Search / Details for Place IDs |
+| Takeout import matching | Exact identifiers, saved-place selection, and pin placement | Text Search / Details for Place IDs |
 | Open-now / pick-wheel filters on hours | Only if you typed hours | Hours from Google, computed locally |
+
+OpenStreetMap search uses Photon. A search sends the text you submit to the configured service. Takeout imports do not trigger Photon searches. The default public server is intended for moderate use and can be unavailable. For a private or larger installation, set `PLACARD_PHOTON_URL` to your Photon search endpoint (including `/api/`) and restart the app. [Photon hosting and usage](https://github.com/komoot/photon#demo-server)
 
 ## Which APIs to enable
 

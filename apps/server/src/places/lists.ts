@@ -103,11 +103,8 @@ export class Lists extends Context.Service<
           const importRunId = options?.importRunId ?? null
           const inserted = yield* sql<{ id: string }>`
             insert into lists (id, owner_id, name, description, import_run_id)
-            select ${id}, ${ownerId}, ${name}, ${null}, ${importRunId}
-            where not exists (
-              select 1 from lists
-              where owner_id = ${ownerId} and lower(name) = lower(${name})
-            )
+            values (${id}, ${ownerId}, ${name}, ${null}, ${importRunId})
+            on conflict (owner_id, lower(name)) do nothing
             returning id`.pipe(Effect.orDie)
           if (inserted[0]) return yield* one(ownerId, inserted[0].id).pipe(Effect.orDie)
           const again = yield* findByName(ownerId, name)

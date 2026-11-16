@@ -143,6 +143,7 @@ const StubEnrichment = Layer.succeed(
   Enrichment.of({
     applyDetails: () => Effect.void,
     enrichPlace: unused,
+    edit: unused,
     setOverride: unused,
     clearOverride: unused,
     planRefreshAll: () => Effect.succeed({ placeCount: 0 }),

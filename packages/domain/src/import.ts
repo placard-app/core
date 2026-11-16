@@ -1,5 +1,5 @@
 import { Schema } from "effect"
-import { LatLng } from "./places.ts"
+import { LatLng, PlaceName } from "./places.ts"
 
 export const importRunStatuses = [
   "parsing",
@@ -77,10 +77,18 @@ export const ImportEntryFilter = Schema.Struct({
 })
 export type ImportEntryFilter = typeof ImportEntryFilter.Type
 
-export const ImportResolveInput = Schema.Struct({
-  googlePlaceId: Schema.NonEmptyString,
-  sessionToken: Schema.NullOr(Schema.String),
-})
+export const ImportResolveInput = Schema.Union([
+  Schema.Struct({
+    googlePlaceId: Schema.NonEmptyString,
+    sessionToken: Schema.NullOr(Schema.String),
+  }),
+  Schema.Struct({ placeId: Schema.NonEmptyString }),
+  Schema.Struct({
+    location: LatLng,
+    name: Schema.optional(PlaceName),
+    address: Schema.optional(Schema.Trim.pipe(Schema.check(Schema.isMaxLength(2_000)))),
+  }),
+])
 export type ImportResolveInput = typeof ImportResolveInput.Type
 
 /** Zip bytes as base64, or already-extracted text files. */

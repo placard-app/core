@@ -5,7 +5,7 @@ signup before exposing the instance to others.
 
 ## Add your first place
 
-Open **Add**. Without a Google key, drop a pin, enter a name and type, and save.
+Open **Add**. Without a Google key, search OpenStreetMap by name and town, enter coordinates, or drop a pin. Check the position, name and type, then save.
 With a configured key, search for a place or select a point of interest on the Google
 map. Open the resulting card to add notes, tags, photos, or custom fields.
 
@@ -17,27 +17,24 @@ map. Open the resulting card to add notes, tags, photos, or custom fields.
    for groups you want to keep or leave out. You can return to unfinished triage.
 4. Commit your selection. Importing continues in the background, with progress shown on the import page. Parsing and triage do not call Google Places; matching
    and enrichment can use paid API calls when a key is configured.
-5. Review uncertain matches in **Needs review**. Search for a better match,
-   accept an available weak pin, or skip the entry.
+5. Open **Needs review** to link an entry to one of your saved places, drop a pin, accept an existing pin, or skip it. These actions also work when you reopen an earlier import through **Recent imports**.
 
 The upload limit is 50 MB. See [Takeout formats](takeout-format.md) for supported
 JSON and CSV layouts. Keep the original export until you have checked the result.
-Undoing an import removes the places associated with that run; review the confirmation
-before proceeding.
+Undo removes places and lists created by the import. If you linked a row to a place you already owned, its imported notes and Maps links stay on that place.
 
 ## Find something worth revisiting
 
 **Near me** uses your location. If location access is unavailable, switch to **All**
 or choose a **City**. Use the grid for cards or the map for geographic context.
 Search by name and combine filters for type, tags, lists, visit status, or opening time.
-Opening information depends on enrichment and may be outdated; confirm with the venue
-when timing matters.
+Open a place and choose **Add hours** or **Edit hours** to enter weekly hours in its local time zone. You can enter separate lunch and dinner shifts or hours that extend past midnight. The opening-time filters use this schedule.
 
 ## Make the collection yours
 
 Use tags for qualities such as “quiet” or “date night”; lists group places for trips
 or projects. Mark places **Want to go** or **Been there**. Notes and photos capture
-what you want to remember. Custom fields hold additional structured details.
+what you want to remember. Use **Edit** to set the website, phone, cuisine, and price range. Custom fields hold additional structured details.
 
 Select owned places in the library to apply bulk actions. Deleted places can be
 restored from **Recently deleted** during the 30-day window.

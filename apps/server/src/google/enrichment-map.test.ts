@@ -58,6 +58,19 @@ describe("resolveFacts", () => {
     expect(facts.fromGoogle).toBe(true)
   })
 
+  it("retains stored Takeout hours as a fallback for the card and search", () => {
+    const value = { periods: [] }
+    const row = { key: "opening_hours", value, source: "takeout", is_override: false }
+    expect(resolveFacts([row]).openingHours).toEqual(value)
+    const google = {
+      ...row,
+      source: "google",
+      value: { periods: [], weekdayDescriptions: ["Closed"] },
+    }
+    expect(resolveFacts([row, google]).openingHours).toEqual(google.value)
+    expect(resolveFacts([google, row]).openingHours).toEqual(google.value)
+  })
+
   it("marks fromGoogle false when every fact is manual", () => {
     const facts = resolveFacts([
       { key: "phone", value: "555", source: "manual", is_override: true },

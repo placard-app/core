@@ -2,12 +2,20 @@ import {
   EnrichmentBusy,
   type EnrichmentRun,
   type FactKey,
+  type FactOverrideInput,
   GoogleKeyMissing,
   type GooglePlacesError,
+  InvalidFact,
+  type ListNotFound,
+  openingHoursFromWeek,
+  type Place,
+  type PlaceEdit,
   type PlaceNotFound,
   type PlaceRefreshMode,
+  PriceLevel,
+  weeklyHoursError,
 } from "@placard/domain"
-import { Context, DateTime, Effect, Layer, Option } from "effect"
+import { Context, DateTime, Effect, Layer, Option, Schema } from "effect"
 import { SqlClient } from "effect/sql"
 import { v7 as uuidv7 } from "uuid"
 import { factsFromGoogle } from "../google/enrichment-map.ts"
@@ -38,12 +46,17 @@ export class Enrichment extends Context.Service<
       placeId: string,
       options?: { readonly force?: boolean; readonly mode?: PlaceRefreshMode },
     ) => Effect.Effect<void, PlaceNotFound | GooglePlacesError>
+    readonly edit: (
+      ownerId: string,
+      id: string,
+      input: PlaceEdit,
+    ) => Effect.Effect<Place, PlaceNotFound | ListNotFound | InvalidFact>
     readonly setOverride: (
       ownerId: string,
       placeId: string,
       key: FactKey,
-      value: string | null,
-    ) => Effect.Effect<void, PlaceNotFound>
+      value: FactOverrideInput["value"],
+    ) => Effect.Effect<void, PlaceNotFound | InvalidFact>
     readonly clearOverride: (
       ownerId: string,
       placeId: string,
@@ -157,6 +170,29 @@ export class Enrichment extends Context.Service<
         },
       )
 
+      const setOverride = Effect.fn("Enrichment.setOverride")(function* (
+        ownerId: string,
+        placeId: string,
+        key: FactKey,
+        value: FactOverrideInput["value"],
+      ) {
+        yield* places.get(ownerId, placeId, false)
+        if (value === null || (typeof value === "string" && !value.trim())) {
+          yield* sql`
+              delete from place_facts
+              where place_id = ${placeId} and key = ${key} and source = 'manual'`.pipe(Effect.orDie)
+          return
+        }
+        const fact = yield* manualFactValue(key, value)
+        yield* sql`
+            insert into place_facts (place_id, key, value, source, is_override, fetched_at)
+            values (${placeId}, ${key}, ${JSON.stringify(fact)}::jsonb, 'manual', true, now())
+            on conflict (place_id, key, source) do update set
+              value = excluded.value,
+              is_override = true,
+              fetched_at = now()`.pipe(Effect.orDie)
+      })
+
       return {
         applyDetails,
 
@@ -183,22 +219,28 @@ export class Enrichment extends Context.Service<
           yield* applyDetails(ownerId, placeId, details)
         }),
 
-        setOverride: Effect.fn("Enrichment.setOverride")(function* (ownerId, placeId, key, value) {
-          yield* places.get(ownerId, placeId, false)
-          if (value === null || value.trim() === "") {
-            yield* sql`
-              delete from place_facts
-              where place_id = ${placeId} and key = ${key} and source = 'manual'`.pipe(Effect.orDie)
-            return
-          }
-          yield* sql`
-            insert into place_facts (place_id, key, value, source, is_override, fetched_at)
-            values (${placeId}, ${key}, ${JSON.stringify(value)}::jsonb, 'manual', true, now())
-            on conflict (place_id, key, source) do update set
-              value = excluded.value,
-              is_override = true,
-              fetched_at = now()`.pipe(Effect.orDie)
-        }),
+        setOverride,
+        edit: Effect.fn("Enrichment.edit")(
+          function* (ownerId, id, input) {
+            const { facts, tags, listIds, ...fields } = input
+            // Serialize changes to a card before reading its current values.
+            yield* sql`select id from places where id = ${id} and owner_id = ${ownerId} for update`.pipe(
+              Effect.orDie,
+            )
+            yield* places.update(ownerId, id, fields)
+            if (facts) {
+              for (const key of ["phone", "website", "cuisine", "price_level"] as const) {
+                const value = facts[key]
+                if (value !== undefined) yield* setOverride(ownerId, id, key, value)
+              }
+            }
+            if (tags) yield* places.setTags(ownerId, id, tags)
+            if (listIds) yield* places.setLists(ownerId, id, listIds)
+            return yield* places.get(ownerId, id, false)
+          },
+          sql.withTransaction,
+          Effect.catchTag("SqlError", Effect.die),
+        ),
 
         clearOverride: Effect.fn("Enrichment.clearOverride")(function* (ownerId, placeId, key) {
           yield* places.get(ownerId, placeId, false)
@@ -286,4 +328,30 @@ export class Enrichment extends Context.Service<
       }
     }),
   )
+}
+
+function manualFactValue(key: FactKey, value: NonNullable<FactOverrideInput["value"]>) {
+  const invalid = (message: string) => Effect.fail(new InvalidFact({ message }))
+  if (key === "opening_hours" && typeof value === "object") {
+    const error = weeklyHoursError(value)
+    return error ? invalid(error) : Effect.succeed(openingHoursFromWeek(value))
+  }
+  if (typeof value !== "string") return invalid("This field requires text.")
+  const text = value.trim()
+  switch (key) {
+    case "website": {
+      if (!URL.canParse(text) || !["http:", "https:"].includes(new URL(text).protocol)) {
+        return invalid("Enter a website starting with http:// or https://.")
+      }
+      return text.length <= 2048 ? Effect.succeed(text) : invalid("Website is too long.")
+    }
+    case "price_level":
+      return Schema.is(PriceLevel)(text) ? Effect.succeed(text) : invalid("Choose a price range.")
+    case "phone":
+      return text.length <= 100 ? Effect.succeed(text) : invalid("Phone number is too long.")
+    case "cuisine":
+      return text.length <= 200 ? Effect.succeed(text) : invalid("Cuisine is too long.")
+    default:
+      return invalid("Unsupported value for this place detail.")
+  }
 }

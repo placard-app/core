@@ -61,6 +61,16 @@ describe("Takeout parser", () => {
     expect(extractSearchCoords("https://www.google.com/maps/search/0,0")).toBeNull()
   })
 
+  it("uses the target in Maps URLs and ignores camera coordinates and invalid pins", () => {
+    const location = { lat: 50.85, lng: 4.35 }
+    expect(
+      extractSearchCoords("https://google.com/maps/place/Cafe/@48,2,12z/data=!3d50.85!4d4.35!9m1"),
+    ).toEqual(location)
+    expect(extractSearchCoords("https://maps.google.com/?query=50.85%2C4.35")).toEqual(location)
+    expect(extractSearchCoords("https://google.com/maps/place/Cafe/@48,2,12z")).toBeNull()
+    expect(extractSearchCoords("https://google.com/maps/search/100,230")).toBeNull()
+  })
+
   it("builds stable dedupe keys", () => {
     expect(
       dedupeKeyFor({ cid: "9", featureId: null, name: null, location: null, googleMapsUrl: null }),

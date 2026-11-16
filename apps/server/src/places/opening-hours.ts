@@ -1,4 +1,4 @@
-import type { OpeningHours } from "@placard/domain"
+import { type OpeningHours, weekdayNames } from "@placard/domain"
 
 const MINUTES_PER_DAY = 24 * 60
 const MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY
@@ -10,7 +10,26 @@ export interface LocalClock {
   readonly minute: number
 }
 
-export const toLocalClock = (utcMillis: number, utcOffsetMinutes: number): LocalClock => {
+export const toLocalClock = (
+  utcMillis: number,
+  utcOffsetMinutes: number,
+  timeZone?: string,
+): LocalClock => {
+  if (timeZone) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      weekday: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(utcMillis)
+    const read = (key: string) => parts.find((part) => part.type === key)?.value ?? ""
+    return {
+      day: weekdayNames.indexOf(read("weekday")),
+      hour: Number(read("hour")),
+      minute: Number(read("minute")),
+    }
+  }
   const local = new Date(utcMillis + utcOffsetMinutes * 60_000)
   return {
     day: local.getUTCDay(),
@@ -34,18 +53,15 @@ export const isOpenAt = (
   utcMillis: number,
 ): boolean => {
   if (!hours?.periods?.length) return false
-  const offset = utcOffsetMinutes ?? 0
-  const local = toLocalClock(utcMillis, offset)
+  return openOnLocalClock(hours, toLocalClock(utcMillis, utcOffsetMinutes ?? 0, hours.timeZone))
+}
+
+function openOnLocalClock(hours: OpeningHours, local: LocalClock) {
   const now = toWeekMinute(local.day, local.hour, local.minute)
 
   for (const period of hours.periods) {
     const open = toWeekMinute(period.open.day, period.open.hour, period.open.minute)
-    if (!period.close) {
-      // Open with no close: treat as open for 24 hours from open.
-      const close = normalizeWeekMinute(open + MINUTES_PER_DAY)
-      if (inHalfOpenWeekRange(now, open, close)) return true
-      continue
-    }
+    if (!period.close) return true // Google's always-open period has no closing point.
     const close = toWeekMinute(period.close.day, period.close.hour, period.close.minute)
     if (
       inHalfOpenWeekRange(
@@ -77,15 +93,8 @@ export const isOpenTonight = (
   utcMillis: number,
 ): boolean => {
   if (!hours?.periods?.length) return false
-  const offset = utcOffsetMinutes ?? 0
-  const local = toLocalClock(utcMillis, offset)
-  if (local.hour > 19 || (local.hour === 19 && local.minute > 0)) {
-    return isOpenAt(hours, utcOffsetMinutes, utcMillis)
-  }
-  // Build a UTC instant that is 19:00 local on the same local calendar day.
-  const localMidnightUtc = utcMillis - (local.hour * 60 + local.minute) * 60_000
-  const dinnerUtc = localMidnightUtc + 19 * 60 * 60_000
-  return isOpenAt(hours, utcOffsetMinutes, dinnerUtc)
+  const local = toLocalClock(utcMillis, utcOffsetMinutes ?? 0, hours.timeZone)
+  return openOnLocalClock(hours, local.hour >= 19 ? local : { ...local, hour: 19, minute: 0 })
 }
 
 /** Format meters using the user's distance unit preference. */

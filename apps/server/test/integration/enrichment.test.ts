@@ -82,6 +82,55 @@ layer(TestApp.layer, { concurrent: false, timeout: 120_000 })("enrichment", (it)
     }),
   )
 
+  it.effect("rolls back the entire place edit if a detail is invalid", () =>
+    run(async () => {
+      const path = `/api/places/${micheleId}`
+      const before = (await admin.browser.get(path)).body
+      const response = await admin.browser.send("PATCH", path, {
+        name: "Unsaved rename",
+        facts: { phone: "+32 123", website: "invalid" },
+      })
+      expect(response.status).toBe(400)
+      const after = (await admin.browser.get(path)).body
+      expect(after.name).toBe(before.name)
+      expect(after.facts.phone).toBe(before.facts.phone)
+    }),
+  )
+
+  it.effect("validates manual schedules and preserves them on a merge refresh", () =>
+    run(async () => {
+      const path = `/api/places/${micheleId}/facts/opening_hours`
+      const days = Array.from({ length: 7 }, () => ({ kind: "allDay" }))
+      const invalid = await admin.browser.send("PUT", path, {
+        value: { days, timeZone: "Bad/Zone" },
+      })
+      expect(invalid.status).toBe(400)
+      const invalidWebsite = await admin.browser.send(
+        "PUT",
+        `/api/places/${micheleId}/facts/website`,
+        { value: "javascript:alert(1)" },
+      )
+      expect(invalidWebsite.status).toBe(400)
+      const saved = await admin.browser.send("PUT", path, {
+        value: { days, timeZone: "Europe/Rome" },
+      })
+      expect(saved.status).toBe(200)
+      expect(saved.body.facts.openingHours.periods).toHaveLength(7)
+      const refreshed = await admin.browser.send("POST", `/api/places/${micheleId}/refresh`, {
+        mode: "merge",
+      })
+      expect(refreshed.body.facts.openingHours).toEqual(saved.body.facts.openingHours)
+      const searchOpen = () =>
+        admin.browser.send("POST", "/api/search", { text: "My Michele", open: "now" })
+      expect((await searchOpen()).body).toMatchObject([{ place: { id: micheleId } }])
+      const closed = await admin.browser.send("PUT", path, {
+        value: { days: days.map(() => ({ kind: "closed" })), timeZone: "Europe/Rome" },
+      })
+      expect(closed.status).toBe(200)
+      expect((await searchOpen()).body).toEqual([])
+    }),
+  )
+
   it.effect("replace refresh clears overrides and edited fields, keeps notes", () =>
     run(async () => {
       const noted = await admin.browser.send("PATCH", `/api/places/${micheleId}`, {

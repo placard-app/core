@@ -39,7 +39,19 @@ export interface ParseResult {
 
 const normalizePath = (path: string) => path.replace(/\\/g, "/").replace(/^\.\//, "")
 
-const isNullIsland = (lng: number, lat: number) => Math.abs(lng) < 1e-9 && Math.abs(lat) < 1e-9
+const coordinates = (lat: unknown, lng: unknown) => {
+  if (
+    typeof lat !== "number" ||
+    typeof lng !== "number" ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180 ||
+    (Math.abs(lat) < 1e-9 && Math.abs(lng) < 1e-9)
+  )
+    return null
+  return { lat, lng }
+}
 
 /** Extract cid=… or 0x…:0x… / ftid / 1s0x feature ids from a Maps URL. */
 export const extractMapsSignals = (
@@ -55,17 +67,20 @@ export const extractMapsSignals = (
   return { cid, featureId }
 }
 
-/** Dropped-pin URLs: /maps/search/<lat>,<lng> */
-export const extractSearchCoords = (
-  url: string | null | undefined,
-): { lat: number; lng: number } | null => {
-  if (!url) return null
-  const match = url.match(/\/maps\/search\/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i)
-  if (!match) return null
-  const lat = Number(match[1])
-  const lng = Number(match[2])
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || isNullIsland(lng, lat)) return null
-  return { lat, lng }
+/** Take target coordinates only. The @lat,lng portion is the camera position. */
+export const extractSearchCoords = (raw: string | null | undefined) => {
+  if (!raw || !URL.canParse(raw)) return null
+  const url = new URL(raw)
+  const pair = /^(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)$/
+  const query = url.searchParams.get("query") ?? url.searchParams.get("q")
+  const path = url.pathname.replace(/%2c/gi, ",")
+  const pin = path.match(/\/maps\/search\/([^/]+)/i)?.[1]
+  const match =
+    (query && pair.exec(query.trim())) ||
+    (pin && pair.exec(pin)) ||
+    (path.includes("/maps/place/") &&
+      path.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)(?=[!/]|$)/i))
+  return match ? coordinates(Number(match[1]), Number(match[2])) : null
 }
 
 export const dedupeKeyFor = (entry: {
@@ -118,16 +133,10 @@ const parseSavedPlacesJson = (sourceFile: string, text: string): ParsedTakeoutEn
     const coords = feature.geometry?.coordinates
     const lng = coords?.[0]
     const lat = coords?.[1]
-    const hasCoords =
-      typeof lng === "number" &&
-      typeof lat === "number" &&
-      Number.isFinite(lng) &&
-      Number.isFinite(lat)
-    const nullIsland = hasCoords && isNullIsland(lng!, lat!)
     const locationObj = props.location
-    const needsLocation = !locationObj || !hasCoords || nullIsland
     const { cid, featureId } = extractMapsSignals(props.google_maps_url)
-    const location = needsLocation || !hasCoords ? null : { lat: lat!, lng: lng! }
+    const location = coordinates(lat, lng) ?? extractSearchCoords(props.google_maps_url)
+    const needsLocation = location === null
     const entry = {
       sourceFile,
       sourceList: null,

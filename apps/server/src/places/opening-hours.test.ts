@@ -1,5 +1,10 @@
 import { describe, expect, it } from "@effect/vitest"
-import type { OpeningHours } from "@placard/domain"
+import {
+  type OpeningHours,
+  openingHoursFromWeek,
+  weekFromOpeningHours,
+  weeklyHoursError,
+} from "@placard/domain"
 import { formatDistance, isOpenAt, isOpenTonight, toLocalClock } from "./opening-hours.ts"
 
 /** Monday 12:00–23:00 local (da Michele style). day 1 = Monday. */
@@ -90,5 +95,64 @@ describe("formatDistance", () => {
     expect(formatDistance(250, "km")).toBe("250 m")
     expect(formatDistance(2500, "km")).toBe("2.5 km")
     expect(formatDistance(2500, "mi")).toBe("1.6 mi")
+  })
+})
+
+describe("manual weekly hours", () => {
+  const hours = openingHoursFromWeek({
+    timeZone: "Europe/Brussels",
+    days: [
+      { kind: "closed" },
+      {
+        kind: "intervals",
+        intervals: [
+          { start: "11:00", end: "14:00" },
+          { start: "18:00", end: "21:30" },
+        ],
+      },
+      { kind: "unknown" },
+      { kind: "unknown" },
+      { kind: "unknown" },
+      { kind: "allDay" },
+      { kind: "intervals", intervals: [{ start: "22:00", end: "02:00" }] },
+    ],
+  })
+
+  it("uses summer and winter local times for split shifts and tonight", () => {
+    for (const [date, offset] of [
+      ["2026-07-06", 2],
+      ["2026-11-16", 1],
+    ] as const) {
+      const utcMidnight = Date.parse(`${date}T00:00:00Z`)
+      const at = (hour: number) => utcMidnight + (hour - offset) * 3_600_000
+      expect(isOpenAt(hours, null, at(11))).toBe(true)
+      expect(isOpenAt(hours, null, at(14))).toBe(false)
+      expect(isOpenAt(hours, null, at(18))).toBe(true)
+      expect(isOpenTonight(hours, null, at(15))).toBe(true)
+    }
+  })
+
+  it("preserves overnight, all-day and incomplete hours when reopened", () => {
+    expect(hours.weekdayDescriptions).toContain("Sunday: 00:00–02:00")
+    expect(hours.weekdayDescriptions).toContain("Tuesday: Hours unknown")
+    expect(isOpenAt(hours, null, Date.parse("2026-11-14T23:30:00Z"))).toBe(true)
+    expect(isOpenAt(hours, null, Date.parse("2026-11-15T01:00:00Z"))).toBe(false)
+    expect(openingHoursFromWeek(weekFromOpeningHours(hours, "UTC"))).toEqual(hours)
+  })
+
+  it("rejects overlaps across the week boundary", () => {
+    const week = weekFromOpeningHours(hours, "UTC")
+    expect(
+      weeklyHoursError({ ...week, days: [{ kind: "allDay" }, ...week.days.slice(1)] }),
+    ).toMatch(/overlap/)
+    expect(weeklyHoursError({ ...week, timeZone: "Brussels/Moon" })).toMatch(/time zone/)
+  })
+
+  it("uses the provider's always-open period on every day", () => {
+    const always = { periods: [{ open: { day: 0, hour: 0, minute: 0 } }] }
+    expect(isOpenAt(always, 0, mondayAfternoonUtc)).toBe(true)
+    expect(weekFromOpeningHours(always, "UTC").days.every((day) => day.kind === "allDay")).toBe(
+      true,
+    )
   })
 })

@@ -68,6 +68,7 @@ export function ImportTriagePage({ runId }: { readonly runId: string }) {
   const { data: run, error: runError, reload: reloadRun } = useLoad(loadRun)
   const { data: allEntries, error: entriesError, reload: reloadEntries } = useLoad(loadEntries)
 
+  const { data: google } = useLoad(useCallback(() => api((c) => c.google.config()), []))
   const processing = run?.status === "parsing" || run?.status === "committing"
   useEffect(() => {
     if (!processing) return
@@ -236,8 +237,12 @@ export function ImportTriagePage({ runId }: { readonly runId: string }) {
           <h1 className="text-3xl font-semibold tracking-tight">Takeout triage</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Status <Badge variant="secondary">{run.status}</Badge> · {run.counts.parsed} parsed ·{" "}
-            {run.counts.kept} keep · {run.counts.skipped} skip · {run.counts.pending} pending · ~
-            {run.expectedApiCalls} API calls if you commit kept entries
+            {run.counts.kept} keep · {run.counts.skipped} skip · {run.counts.pending} pending
+            {run.status === "triage" &&
+              google &&
+              (google.mapsApiKey
+                ? ` · ~${run.expectedApiCalls} Google API calls if you commit`
+                : " · No Google API calls")}
           </p>
           {run.counts.pending > 0 && savedPlaces && savedPlaces.pending > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -251,9 +256,12 @@ export function ImportTriagePage({ runId }: { readonly runId: string }) {
             (confirmCommit ? (
               <div className="flex max-w-sm flex-col items-end gap-2 text-right">
                 <p className="text-sm text-muted-foreground">
-                  Commit {run.counts.kept} kept places (~{run.expectedApiCalls} Google API calls)?
+                  Commit {run.counts.kept} kept places
+                  {google?.mapsApiKey ? ` (~${run.expectedApiCalls} Google API calls)` : ""}?
                 </p>
-                <GoogleCostEstimate action="import" count={run.counts.kept} />
+                {google?.mapsApiKey && (
+                  <GoogleCostEstimate action="import" count={run.counts.kept} />
+                )}
                 <div className="flex gap-2">
                   <Button disabled={busy} onClick={() => void commit()}>
                     {busy ? "Committing…" : "Confirm commit"}
@@ -507,6 +515,7 @@ export function ImportTriagePage({ runId }: { readonly runId: string }) {
 
       {run.status === "done" && (
         <NeedsReviewSection
+          hasGoogleKey={Boolean(google?.mapsApiKey)}
           runId={runId}
           matched={run.counts.matched}
           needsReview={run.counts.needsReview}
