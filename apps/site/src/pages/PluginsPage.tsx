@@ -63,6 +63,50 @@ const plugins = [
     alt: "Illustration of a shared shortlist with a checkmark on a favorite place",
     features: ["Shared shortlists", "Household voting", "Reveal your favorites"],
   },
+  {
+    id: "places.visit-journal",
+    name: "Visit Journal",
+    tagline: "What was it like last time?",
+    description:
+      "Keep a dated note on a place after each visit. When you return, your notes are right there on its place card.",
+    image: "visit-journal.svg",
+    screenshot: "visit-journal-desktop.png",
+    alt: "Open notebook with a place pin and a ribbon bookmark",
+    features: ["Private visit history", "Dated notes", "On each place card"],
+  },
+  {
+    id: "places.want-to-try",
+    name: "Want to Try",
+    tagline: "For the next time you’re here.",
+    description:
+      "Keep a private checklist on each place card. Save a dish, a table or something else to try, then tick it off when you do.",
+    image: "want-to-try.svg",
+    screenshot: "want-to-try-desktop.png",
+    alt: "Clipboard with one item checked off",
+    features: ["Per-place checklists", "Private to your account", "Check off or reopen items"],
+  },
+  {
+    id: "places.walk-bingo",
+    name: "Walk Bingo",
+    tagline: "How much can you spot on a walk?",
+    description:
+      "Deal a card before you head out. Mark the details you spot along the way, from a red door to a bird on a wire. Three in a row makes bingo.",
+    image: "walk-bingo.svg",
+    screenshot: "walk-bingo-desktop.png",
+    alt: "Nine-square bingo card with three green checks on a diagonal",
+    features: ["Random spotting cards", "Eight possible lines", "Resume in the same tab"],
+  },
+  {
+    id: "places.secret-landmark",
+    name: "Secret Landmark",
+    tagline: "One traveler missed the destination.",
+    description:
+      "Pass one phone around the table. Everyone but the traveler gets the same landmark. Trade clues aloud, then vote on who was bluffing.",
+    image: "secret-landmark.svg",
+    screenshot: "secret-landmark-desktop.png",
+    alt: "Two playing cards with a traveler’s mask and the Eiffel Tower",
+    features: ["3–8 players", "Private role cards", "Group vote and reveal"],
+  },
 ]
 
 export function PluginsPage() {
@@ -74,8 +118,7 @@ export function PluginsPage() {
           <h1>Your library. A few extra possibilities.</h1>
           <p className="lede">
             Optional plugins for the places you keep. Add the tools you need to your own Placard
-            instance, from restaurant menus and choosing where to go to printing a board of your
-            favorite places, or planning a day around them.
+            instance to plan outings, remember visits or play a game together.
           </p>
           <a href={`${ORGANIZATION}?q=module-&tab=repositories`} target="_blank" rel="noreferrer">
             Browse the module repositories on GitHub →
@@ -109,7 +152,7 @@ export function PluginsPage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {plugin.name} guide & source on GitHub →
+                    {plugin.name} guide &amp; source on GitHub →
                   </a>
                 </div>
               </div>
@@ -129,7 +172,10 @@ export function PluginsPage() {
           <div>
             <ol>
               <li>Open Marketplace in Placard’s main navigation.</li>
-              <li>Choose a plugin and ask an instance admin to activate it.</li>
+              <li>
+                Ask an instance admin to activate a listed plugin or install it using its GitHub
+                repository URL.
+              </li>
               <li>Open its page or find the feature on your place cards.</li>
             </ol>
             <p>
