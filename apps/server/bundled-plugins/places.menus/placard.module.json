@@ -1,7 +1,7 @@
 {
   "id": "places.menus",
   "name": "Menus",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Keep restaurant menus, dishes and prices together with the places you save.",
   "permissions": [
     "places.read"

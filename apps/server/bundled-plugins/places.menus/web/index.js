@@ -1,3 +1,6 @@
+// src/web/menu.css
+var menu_default = '.pm {\n  --menu-ink: var(--foreground, #251f19);\n  --menu-muted: var(--muted-foreground, #655d54);\n  --menu-line: var(--border, #dcd2c4);\n  --menu-paper: var(--card, #faf6ef);\n  --menu-accent: var(--primary, #8b3a2a);\n  color: var(--menu-ink);\n  border-top: 1px solid var(--menu-line);\n  padding-top: 28px;\n  display: grid;\n  gap: 18px;\n  overflow-wrap: anywhere;\n}\n.pm *,\n.pm *::before {\n  box-sizing: border-box;\n}\n.pm h2,\n.pm h3,\n.pm p,\n.pm ul {\n  margin: 0;\n}\n.pm header,\n.pm .row,\n.pm .actions,\n.pm .menu-tabs,\n.pm .confirm {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n}\n.pm header {\n  justify-content: space-between;\n}\n.pm h2 {\n  font-size: 1.25rem;\n  font-weight: 650;\n}\n.pm button {\n  min-height: 44px;\n  padding: 8px 12px;\n  border: 0;\n  border-radius: 9px;\n  background: transparent;\n  color: var(--menu-accent);\n  font: inherit;\n  font-weight: 600;\n  cursor: pointer;\n  max-width: 100%;\n  overflow-wrap: anywhere;\n}\n.pm button:enabled:hover {\n  background: color-mix(in srgb, var(--menu-accent) 9%, transparent);\n}\n.pm button:disabled {\n  opacity: 0.45;\n  cursor: default;\n}\n.pm :is(button, input, a):focus-visible {\n  outline: 2px solid var(--menu-accent);\n  outline-offset: 2px;\n}\n.pm button.primary {\n  padding-inline: 18px;\n  background: var(--menu-accent);\n  color: var(--primary-foreground, #faf6ef);\n}\n.pm button.primary:enabled:hover {\n  background: color-mix(in srgb, var(--menu-accent) 88%, black);\n}\n.pm button.secondary {\n  background: var(--secondary, #e7dfd3);\n  color: var(--menu-ink);\n}\n.pm button.remove,\n.pm .order button {\n  display: inline-grid;\n  place-items: center;\n  width: 44px;\n  padding: 0;\n  color: var(--menu-muted);\n}\n.pm button.remove {\n  margin-inline-start: auto;\n}\n.pm button.remove:hover {\n  color: var(--destructive, #9b2c1f);\n}\n.pm .order {\n  display: inline-flex;\n  gap: 2px;\n}\n.pm .menu-tabs {\n  gap: 4px;\n  padding-bottom: 8px;\n  border-bottom: 1px solid var(--menu-line);\n}\n.pm .menu-tabs:empty {\n  display: none;\n}\n.pm .menu-tabs button {\n  color: var(--menu-muted);\n  border-radius: 30px;\n  padding-inline: 16px;\n}\n.pm .menu-tabs button[aria-pressed="true"] {\n  color: var(--menu-accent);\n  background: color-mix(in srgb, var(--menu-accent) 10%, var(--menu-paper));\n}\n.pm .course {\n  padding: clamp(16px, 3vw, 26px);\n  border-radius: 16px;\n  background: var(--menu-paper);\n  border: 1px solid var(--menu-line);\n}\n.pm .course h3 {\n  font:\n    600 1.5rem / 1.2 Georgia,\n    serif;\n  margin-bottom: 6px;\n}\n.pm .item {\n  display: grid;\n  gap: 6px;\n  padding-block: 16px;\n}\n.pm .item + .item {\n  border-top: 1px solid var(--menu-line);\n}\n.pm .item:last-child {\n  padding-bottom: 0;\n}\n.pm .item-title {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;\n  gap: 16px;\n  align-items: baseline;\n  font-weight: 650;\n}\n.pm .item-title span:last-child {\n  font-variant-numeric: tabular-nums;\n  color: var(--menu-accent);\n}\n.pm .item p,\n.pm .course > p {\n  white-space: pre-wrap;\n  line-height: 1.55;\n  color: var(--menu-muted);\n}\n.pm small,\n.pm .muted,\n.pm .variant-line {\n  color: var(--menu-muted);\n  font-size: 0.875rem;\n}\n.pm .dietary {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 5px;\n  list-style: none;\n  padding: 0;\n}\n.pm .dietary li {\n  background: var(--secondary, #e7dfd3);\n  padding: 2px 8px;\n  border-radius: 6px;\n  font-size: 0.8rem;\n}\n.pm .item-image {\n  display: block;\n  width: 180px;\n  max-width: 100%;\n  height: 130px;\n  object-fit: cover;\n  border-radius: 10px;\n  margin-block: 5px;\n}\n.pm a {\n  text-decoration: underline;\n}\n.pm [role="alert"] {\n  color: var(--destructive, #9b2c1f);\n}\n.pm .confirm {\n  flex-basis: 100%;\n  padding: 10px;\n  background: var(--menu-paper);\n  border-radius: 10px;\n}\n.pm form,\n.pm fieldset {\n  display: grid;\n  min-width: 0;\n  gap: 16px;\n}\n.pm fieldset {\n  margin: 0;\n  padding: 16px;\n  border: 0;\n  border-radius: 14px;\n  background: color-mix(in srgb, var(--menu-accent) 5%, var(--menu-paper));\n}\n.pm fieldset fieldset {\n  background: var(--menu-paper);\n  border: 1px solid var(--menu-line);\n}\n.pm fieldset fieldset fieldset {\n  border: 0;\n  border-top: 1px solid var(--menu-line);\n  border-radius: 0;\n  padding: 16px 0 0;\n}\n.pm legend {\n  padding: 0 6px;\n  font-weight: 650;\n}\n.pm .row {\n  gap: 12px;\n  align-items: end;\n}\n.pm label {\n  display: grid;\n  gap: 6px;\n  font-size: 0.875rem;\n  font-weight: 600;\n  min-width: 0;\n}\n.pm .row label {\n  flex: 1 1 130px;\n}\n.pm input {\n  width: 100%;\n  min-width: 0;\n  min-height: 44px;\n  padding: 9px 12px;\n  border: 1px solid var(--menu-line);\n  border-radius: 9px;\n  background: #fffdf9;\n  color: var(--menu-ink);\n  font: inherit;\n  font-weight: 400;\n}\n.pm input[type="file"] {\n  padding: 7px;\n  font-size: 0.82rem;\n}\n.pm input::file-selector-button {\n  border: 0;\n  border-radius: 5px;\n  padding: 6px 9px;\n  margin-right: 8px;\n  background: var(--secondary, #e7dfd3);\n  color: var(--menu-ink);\n  cursor: pointer;\n}\n.pm fieldset > button {\n  justify-self: start;\n}\n.pm .actions {\n  gap: 4px;\n}\n@media (max-width: 480px) {\n  .pm fieldset {\n    padding: 12px;\n  }\n  .pm .row label {\n    flex-basis: 110px;\n  }\n  .pm .row.variant {\n    gap: 6px;\n  }\n}\n';
+
 // src/web/shims/react.ts
 var bridge = globalThis.__PLACARD_PLUGIN__;
 if (!bridge?.React) {
@@ -33,9 +36,6 @@ if (!bridge2?.jsxRuntime) {
 var { jsx, jsxs, Fragment: Fragment2 } = bridge2.jsxRuntime;
 
 // src/web/MenuSection.tsx
-var styles = `
-.pm{border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:24px;display:grid;gap:16px}.pm *{box-sizing:border-box}.pm header,.pm .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pm header h2{flex:1;font-size:1.2rem;font-weight:600}.pm button{min-height:44px;padding:8px 12px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);border-radius:6px;background:transparent;color:inherit;cursor:pointer}.pm button:disabled{opacity:.45;cursor:default}.pm button[aria-pressed=true]{background:color-mix(in srgb,currentColor 14%,transparent)}.pm label{display:grid;gap:4px;font-size:.875rem;flex:1;min-width:130px}.pm input,.pm textarea{width:100%;min-height:44px;padding:8px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);border-radius:4px;background:transparent;color:inherit}.pm form,.pm fieldset{display:grid;gap:12px;min-width:0}.pm fieldset{border:1px solid color-mix(in srgb,currentColor 20%,transparent);padding:12px;border-radius:6px}.pm legend{padding:0 6px}.pm .item{padding:12px 0;border-bottom:1px solid color-mix(in srgb,currentColor 12%,transparent)}.pm .item-title{display:flex;justify-content:space-between;gap:16px;font-weight:500}.pm small,.pm .muted{opacity:.7}.pm [role=alert]{color:#c65b45}.pm a{text-decoration:underline}.pm h3{font-weight:600;margin:16px 0 8px}.pm .item p{white-space:pre-wrap}.pm .row.variant{align-items:flex-end}.pm .item-image{display:block;width:180px;max-width:100%;height:130px;object-fit:cover;border-radius:6px;margin:8px 0}.pm input[type=file]{min-width:0}.pm .actions{display:flex;gap:8px;flex-wrap:wrap}
-`;
 async function call(operation, input) {
   const response = await fetch(`/api/m/places.menus/${operation}`, {
     method: "POST",
@@ -57,17 +57,61 @@ function move(items, index, delta) {
   [next[index], next[to]] = [next[to], next[index]];
   return next;
 }
+function RemoveButton({
+  label,
+  disabled,
+  onClick
+}) {
+  return /* @__PURE__ */ jsx(
+    "button",
+    {
+      className: "remove",
+      type: "button",
+      "aria-label": label,
+      title: label,
+      disabled,
+      onClick,
+      children: /* @__PURE__ */ jsx(
+        "svg",
+        {
+          "aria-hidden": "true",
+          width: "18",
+          height: "18",
+          viewBox: "0 0 24 24",
+          fill: "none",
+          stroke: "currentColor",
+          strokeWidth: "1.7",
+          strokeLinecap: "round",
+          strokeLinejoin: "round",
+          children: /* @__PURE__ */ jsx("path", { d: "M4 7h16M10 11v6m4-6v6M5.5 7l1 12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2l1-12M9 7V4h6v3" })
+        }
+      )
+    }
+  );
+}
 function Order({
   index,
   length,
   change
 }) {
-  return /* @__PURE__ */ jsxs(Fragment2, { children: [
-    /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Move up", disabled: index === 0, onClick: () => change(-1), children: "\u2191" }),
+  if (length < 2) return null;
+  return /* @__PURE__ */ jsxs("span", { className: "order", children: [
     /* @__PURE__ */ jsx(
       "button",
       {
         type: "button",
+        title: "Move up",
+        "aria-label": "Move up",
+        disabled: index === 0,
+        onClick: () => change(-1),
+        children: "\u2191"
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        title: "Move down",
         "aria-label": "Move down",
         disabled: index === length - 1,
         onClick: () => change(1),
@@ -238,10 +282,10 @@ function MenuSection({ placeId, category, isOwner }) {
     });
   }
   return /* @__PURE__ */ jsxs("section", { className: "pm", "aria-label": "Menus", children: [
-    /* @__PURE__ */ jsx("style", { children: styles }),
+    /* @__PURE__ */ jsx("style", { children: menu_default }),
     /* @__PURE__ */ jsxs("header", { children: [
       /* @__PURE__ */ jsx("h2", { children: "Menus" }),
-      isOwner && !draft && /* @__PURE__ */ jsx("button", { onClick: create, disabled: busy, children: "+ Add menu" })
+      isOwner && !draft && /* @__PURE__ */ jsx("button", { className: "primary", onClick: create, disabled: busy, children: "+ Add menu" })
     ] }),
     error && /* @__PURE__ */ jsxs("p", { role: "alert", children: [
       error,
@@ -264,7 +308,7 @@ function MenuSection({ placeId, category, isOwner }) {
     !menus && !error && /* @__PURE__ */ jsx("p", { role: "status", children: "Loading menus\u2026" }),
     menus?.length === 0 && !draft && /* @__PURE__ */ jsx("p", { className: "muted", children: "No menu yet. Add one manually or ask your connected AI assistant to import one through MCP." }),
     !draft && /* @__PURE__ */ jsxs(Fragment2, { children: [
-      /* @__PURE__ */ jsx("div", { className: "row", "aria-label": "Choose menu", children: menus?.map((menu) => /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx("div", { className: "menu-tabs", role: "group", "aria-label": "Choose menu", children: menus?.map((menu) => /* @__PURE__ */ jsx(
         "button",
         {
           "aria-pressed": selected?.id === menu.id,
@@ -278,7 +322,7 @@ function MenuSection({ placeId, category, isOwner }) {
       )) }),
       selected && /* @__PURE__ */ jsxs(Fragment2, { children: [
         selected.notes && /* @__PURE__ */ jsx("p", { children: selected.notes }),
-        selected.sections.map((section) => /* @__PURE__ */ jsxs("div", { children: [
+        selected.sections.map((section) => /* @__PURE__ */ jsxs("div", { className: "course", children: [
           /* @__PURE__ */ jsx("h3", { children: section.name }),
           section.notes && /* @__PURE__ */ jsx("p", { children: section.notes }),
           section.items.map((item) => /* @__PURE__ */ jsxs("div", { className: "item", children: [
@@ -296,14 +340,14 @@ function MenuSection({ placeId, category, isOwner }) {
               }
             ),
             item.description && /* @__PURE__ */ jsx("p", { children: item.description }),
-            item.variants.map((variant, i) => /* @__PURE__ */ jsxs("p", { children: [
+            item.variants.map((variant, i) => /* @__PURE__ */ jsxs("p", { className: "variant-line", children: [
               variant.name,
               ": ",
               variant.price,
               " ",
               selected.currency
             ] }, i)),
-            item.dietaryLabels.length > 0 && /* @__PURE__ */ jsx("small", { children: item.dietaryLabels.join(" \xB7 ") }),
+            item.dietaryLabels.length > 0 && /* @__PURE__ */ jsx("ul", { className: "dietary", children: item.dietaryLabels.map((label, index) => /* @__PURE__ */ jsx("li", { children: label }, index)) }),
             item.notes && /* @__PURE__ */ jsx("p", { children: /* @__PURE__ */ jsx("small", { children: item.notes }) })
           ] }, item.id))
         ] }, section.id)),
@@ -318,7 +362,15 @@ function MenuSection({ placeId, category, isOwner }) {
           ] })
         ] }),
         isOwner && /* @__PURE__ */ jsxs("div", { className: "actions", children: [
-          /* @__PURE__ */ jsx("button", { disabled: busy, onClick: () => setDraft(structuredClone(selected)), children: "Edit menu" }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              className: "secondary",
+              disabled: busy,
+              onClick: () => setDraft(structuredClone(selected)),
+              children: "Edit menu"
+            }
+          ),
           /* @__PURE__ */ jsx(
             Order,
             {
@@ -330,8 +382,15 @@ function MenuSection({ placeId, category, isOwner }) {
               }
             }
           ),
-          /* @__PURE__ */ jsx("button", { disabled: busy, onClick: () => setConfirmDelete(true), children: "Delete menu" }),
-          confirmDelete && /* @__PURE__ */ jsxs(Fragment2, { children: [
+          !confirmDelete && /* @__PURE__ */ jsx(
+            RemoveButton,
+            {
+              label: "Delete menu",
+              disabled: busy,
+              onClick: () => setConfirmDelete(true)
+            }
+          ),
+          confirmDelete && /* @__PURE__ */ jsxs("div", { className: "confirm", children: [
             /* @__PURE__ */ jsxs("span", { children: [
               "Delete ",
               selected.name,
@@ -430,14 +489,13 @@ function MenuSection({ placeId, category, isOwner }) {
                 }
               ),
               /* @__PURE__ */ jsx(
-                "button",
+                RemoveButton,
                 {
-                  type: "button",
+                  label: "Remove section",
                   onClick: () => setDraft({
                     ...draft,
                     sections: draft.sections.filter((_, i) => i !== sectionIndex)
-                  }),
-                  children: "Remove section"
+                  })
                 }
               )
             ] }),
@@ -547,11 +605,10 @@ function MenuSection({ placeId, category, isOwner }) {
                     }
                   ),
                   /* @__PURE__ */ jsx(
-                    "button",
+                    RemoveButton,
                     {
-                      type: "button",
-                      onClick: () => change({ variants: item.variants.filter((_, i) => i !== vi) }),
-                      children: "Remove variant"
+                      label: "Remove variant",
+                      onClick: () => change({ variants: item.variants.filter((_, i) => i !== vi) })
                     }
                   )
                 ] }, vi)),
@@ -576,14 +633,13 @@ function MenuSection({ placeId, category, isOwner }) {
                     }
                   ),
                   /* @__PURE__ */ jsx(
-                    "button",
+                    RemoveButton,
                     {
-                      type: "button",
+                      label: "Remove item",
                       onClick: () => updateSection(sectionIndex, {
                         ...section,
                         items: section.items.filter((_, i) => i !== itemIndex)
-                      }),
-                      children: "Remove item"
+                      })
                     }
                   )
                 ] })
@@ -616,7 +672,7 @@ function MenuSection({ placeId, category, isOwner }) {
             }
           ),
           /* @__PURE__ */ jsxs("div", { className: "actions", children: [
-            /* @__PURE__ */ jsx("button", { type: "submit", children: busy ? "Saving\u2026" : "Save menu" }),
+            /* @__PURE__ */ jsx("button", { className: "primary", type: "submit", children: busy ? "Saving\u2026" : "Save menu" }),
             /* @__PURE__ */ jsx(
               "button",
               {
