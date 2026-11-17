@@ -109,6 +109,7 @@ import {
   PlaceSuggestion,
   PlaceVisibilityUpdate,
   SavedPlace,
+  SaveFromMapsInput,
   TagRef,
 } from "./places.ts"
 import { OsmCandidate, OsmLookupFailed, SearchFilter, SearchHit } from "./search.ts"
@@ -220,6 +221,16 @@ export class AdminApi extends HttpApiGroup.make("admin")
   )
   .middleware(AdminAuthentication)
   .prefix("/api/admin") {}
+
+export class MapsApi extends HttpApiGroup.make("maps")
+  .add(
+    HttpApiEndpoint.post("save", "/api/places/from-maps", {
+      payload: SaveFromMapsInput,
+      success: SavedPlace,
+      error: [GoogleKeyMissing, GooglePlacesFailed, PlaceNotFound, CustomFieldInvalid],
+    }),
+  )
+  .middleware(Authentication) {}
 
 export class PlacesApi extends HttpApiGroup.make("places")
   .add(
@@ -618,6 +629,7 @@ export class Api extends HttpApi.make("placard")
   .add(MeApi)
   .add(AdminApi)
   .add(PlacesApi)
+  .add(MapsApi)
   .add(TagsApi)
   .add(ListsApi)
   .add(GoogleApi)

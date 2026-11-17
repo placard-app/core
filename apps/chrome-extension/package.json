@@ -1,0 +1,14 @@
+{
+  "name": "@placard/chrome-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/capture.test.mjs",
+    "test:chrome": "node --test test/chrome.test.mjs"
+  },
+  "devDependencies": {
+    "fflate": "^0.8.3"
+  }
+}

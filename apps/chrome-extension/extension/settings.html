@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Save to Placard settings</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main>
+      <h1>Save to Placard</h1>
+      <form>
+        <label for="instance">Placard instance URL</label>
+        <input required type="url" id="instance" placeholder="https://placard.example.com" autocomplete="url">
+        <button type="submit">Save settings</button>
+      </form>
+      <p role="status" id="status"></p>
+    </main>
+    <script type="module" src="settings.js"></script>
+  </body>
+</html>

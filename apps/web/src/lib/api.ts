@@ -6,9 +6,10 @@ import { HttpApiClient } from "effect/http-api"
 export class ApiClient extends Context.Service<ApiClient, HttpApiClient.ForApi<typeof Api>>()(
   "placard/ApiClient",
 ) {
-  static readonly layer = Layer.effect(ApiClient, HttpApiClient.make(Api)).pipe(
-    Layer.provide(FetchHttpClient.layer),
-  )
+  static readonly layer = Layer.effect(
+    ApiClient,
+    HttpApiClient.make(Api, { baseUrl: import.meta.env.BASE_URL }),
+  ).pipe(Layer.provide(FetchHttpClient.layer))
 }
 
 const runtime = ManagedRuntime.make(ApiClient.layer)

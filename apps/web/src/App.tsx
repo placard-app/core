@@ -11,6 +11,7 @@ import { LibraryPage } from "@/pages/library-page"
 import { ListsPage } from "@/pages/lists-page"
 import { MarketplacePage } from "@/pages/marketplace-page"
 import { PlacePage } from "@/pages/place-page"
+import { SaveFromMapsPage } from "@/pages/save-from-maps-page"
 import {
   RequireSettingsAdmin,
   SettingsBudgetPage,
@@ -53,6 +54,7 @@ function AuthenticatedRoutes() {
       <Route element={<AppShell modules={list} />}>
         <Route index element={<LibraryPage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/save-from-maps" element={<SaveFromMapsPage />} />
         <Route path="/add" element={<AddPlacePage />} />
         <Route path="/import" element={<ImportPage />} />
         <Route path="/import/:runId" element={<ImportPage />} />
@@ -131,7 +133,7 @@ function AuthenticatedRoutes() {
 
 export function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <SessionProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

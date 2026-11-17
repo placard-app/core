@@ -58,11 +58,16 @@ function useSignupOpen(): boolean | null {
   return open
 }
 
+function useReturnPath() {
+  const { state } = useLocation()
+  const from: unknown = state?.from
+  return typeof from === "string" && /^\/(?![/\\])/.test(from) ? from : "/"
+}
+
 function useAfterAuth() {
   const { refresh } = useSession()
   const navigate = useNavigate()
-  const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? "/"
+  const from = useReturnPath()
   return async () => {
     await refresh()
     navigate(from, { replace: true })
@@ -141,10 +146,11 @@ export function LoginPage() {
   const signupOpen = useSignupOpen()
   const { state } = useSession()
   const afterAuth = useAfterAuth()
+  const from = useReturnPath()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  if (state.status === "signedIn") return <Navigate to="/" replace />
+  if (state.status === "signedIn") return <Navigate to={from} replace />
   if (signupOpen === null) {
     return (
       <AuthLayout title="Sign in" description="Loading…">
@@ -152,7 +158,7 @@ export function LoginPage() {
       </AuthLayout>
     )
   }
-  if (signupOpen) return <Navigate to="/setup" replace />
+  if (signupOpen) return <Navigate to="/setup" replace state={{ from }} />
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -204,9 +210,10 @@ export function SetupPage() {
   const signupOpen = useSignupOpen()
   const { refresh } = useSession()
   const navigate = useNavigate()
+  const from = useReturnPath()
 
   if (signupOpen === null) return <FullPageMessage>Loading…</FullPageMessage>
-  if (!signupOpen) return <Navigate to="/login" replace />
+  if (!signupOpen) return <Navigate to="/login" replace state={{ from }} />
 
   return (
     <AuthLayout
@@ -219,7 +226,7 @@ export function SetupPage() {
           const message = await signUp(fields)
           if (!message) {
             await refresh()
-            navigate("/setup/google", { replace: true })
+            navigate("/setup/google", { replace: true, state: { from } })
           }
           return message
         }}
@@ -243,7 +250,8 @@ function GoogleSetupForm() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const finish = () => navigate("/", { replace: true })
+  const from = useReturnPath()
+  const finish = () => navigate(from, { replace: true })
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const apiKey = String(new FormData(event.currentTarget).get("apiKey")).trim()
@@ -303,7 +311,7 @@ function GoogleSetupForm() {
                   : "Using the key saved for this instance"}{" "}
                 (ending in {data.googleApiKey.last4}).
               </p>
-              <Button onClick={finish}>Continue to library</Button>
+              <Button onClick={finish}>{from === "/" ? "Continue to library" : "Continue"}</Button>
             </>
           )
         ) : (
