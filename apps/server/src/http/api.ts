@@ -20,6 +20,7 @@ import { AdminAuthenticationLive, AuthenticationLive, AuthRoutesLive } from "./a
 import { ExportRoutesLive } from "./export.ts"
 import { HealthApiLive } from "./health.ts"
 import { ImportApiLive } from "./import.ts"
+import { MapsApiLive } from "./maps.ts"
 import { McpRoutesLive } from "./mcp.ts"
 import { MediaApiLive, MediaFileRoutesLive } from "./media.ts"
 import { ModuleFileRoutesLive, ModulesApiLive } from "./modules.ts"
@@ -36,6 +37,7 @@ export const ApiLive = HttpApiBuilder.layer(Api, {
     MeApiLive,
     AdminApiLive,
     PlacesApiLive,
+    MapsApiLive,
     TagsApiLive,
     ListsApiLive,
     GoogleApiLive,

@@ -146,6 +146,33 @@ export const ManualPlaceInput = Schema.Struct({
 })
 export type ManualPlaceInput = typeof ManualPlaceInput.Type
 
+export const MapsSourceUrl = Schema.String.pipe(
+  Schema.check(Schema.isMaxLength(2000)),
+  Schema.check(
+    Schema.isPattern(
+      /^https:\/\/(?:(?:www|maps)\.)?google\.(?:com|cat|[a-z]{2}|(?:com|co)\.[a-z]{2})\/maps\/(?:u\/\d+\/)?(?:place\/|search[/?])[^\s\\]*$/i,
+    ),
+  ),
+)
+export const MapsPlaceId = Schema.String.pipe(
+  Schema.check(Schema.isPattern(/^[A-Za-z0-9_-]{1,255}$/)),
+)
+export const SaveFromMapsInput = Schema.Union([
+  Schema.Struct({
+    mode: Schema.Literal("manual"),
+    ...ManualPlaceInput.fields,
+    mapsUrl: MapsSourceUrl,
+    googlePlaceId: Schema.NullOr(MapsPlaceId),
+  }),
+  Schema.Struct({
+    mode: Schema.Literal("google"),
+    name: PlaceName,
+    mapsUrl: MapsSourceUrl,
+    googlePlaceId: MapsPlaceId,
+  }),
+])
+export type SaveFromMapsInput = typeof SaveFromMapsInput.Type
+
 const Notes = Schema.Trim.pipe(Schema.check(Schema.isMaxLength(10_000)))
 
 /** A partial edit; only the keys present change. Empty address or notes clear them. */

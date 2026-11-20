@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Save to Placard",
+  "version": "0.1.0",
+  "description": "Review and save a Google Maps place on your Placard instance.",
+  "icons": { "128": "icon.png" },
+  "permissions": ["activeTab", "storage"],
+  "action": { "default_title": "Save to Placard", "default_popup": "popup.html" },
+  "options_page": "settings.html"
+}

@@ -103,7 +103,10 @@ export class Places extends Context.Service<
     readonly addManual: (
       ownerId: string,
       input: ManualPlaceInput,
-      options?: { readonly source?: Extract<PlaceSource, "manual" | "mcp"> },
+      options?: {
+        readonly source?: Extract<PlaceSource, "manual" | "mcp">
+        readonly googlePlaceId?: string | null
+      },
     ) => Effect.Effect<SavedPlace>
     /** Create a Takeout pin without a Google Place ID (coords required). */
     readonly addFromTakeout: (
@@ -447,13 +450,21 @@ export class Places extends Context.Service<
         addManual: Effect.fn("Places.addManual")(function* (ownerId, input, options) {
           const source = options?.source ?? "manual"
           const id = uuidv7()
-          yield* sql`
-            insert into places (id, owner_id, name, category, location, address, source, manual_fields)
+          const googlePlaceId = options?.googlePlaceId ?? null
+          const inserted = yield* sql<{ id: string }>`
+            insert into places (id, owner_id, name, category, location, address, source, manual_fields, google_place_id)
             values (
               ${id}, ${ownerId}, ${input.name}, ${input.category},
               ${point(input.location.lat, input.location.lng)}, ${input.address || null},
-              ${source}, ${["name", "category", "address"]}
-            )`.pipe(Effect.orDie)
+              ${source}, ${["name", "category", "address"]}, ${googlePlaceId}
+            )
+            on conflict (owner_id, google_place_id)
+              where google_place_id is not null and deleted_at is null do nothing
+            returning id`.pipe(Effect.orDie)
+          if (!inserted.length && googlePlaceId) {
+            const existing = yield* findByGooglePlaceId(ownerId, googlePlaceId)
+            if (Option.isSome(existing)) return { place: existing.value, created: false }
+          }
           const place = yield* ownedOne(ownerId, id).pipe(Effect.orDie)
           return { place, created: true }
         }),

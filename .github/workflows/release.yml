@@ -65,6 +65,11 @@ jobs:
             type=gha,scope=placard-check
           cache-to: type=gha,scope=placard-image,mode=max
 
+      - uses: actions/download-artifact@v7
+        with:
+          name: save-to-placard-chrome
+          path: dist-release
+
       - name: Prepare install assets
         env:
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -81,6 +86,7 @@ jobs:
             dist-release/Caddyfile
             dist-release/example.env
             dist-release/placard-recovery.py
+            dist-release/placard-chrome-*.zip
 
       # API download URLs exist only after the configuration assets are uploaded.
       # Publish installers last, embedding those exact assets as download fallbacks.

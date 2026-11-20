@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react"
 
-export const authClient = createAuthClient({ basePath: "/api/auth" })
+export const authClient = createAuthClient({ basePath: `${import.meta.env.BASE_URL}api/auth` })
 
 interface SignUpInput {
   readonly name: string

@@ -6,6 +6,7 @@ export {
   HealthApi,
   ImportApi,
   ListsApi,
+  MapsApi,
   McpApi,
   MeApi,
   MediaApi,

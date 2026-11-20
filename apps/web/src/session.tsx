@@ -66,7 +66,13 @@ export function RequireUser({ children }: { readonly children: ReactNode }) {
   const location = useLocation()
   if (state.status === "loading") return <FullPageMessage>Loading…</FullPageMessage>
   if (state.status === "signedOut") {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search + location.hash }}
+      />
+    )
   }
   return children
 }

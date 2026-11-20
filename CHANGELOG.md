@@ -7,6 +7,19 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-20
+
+### Added
+
+- Save a selected Google Maps place with the Save to Placard Chrome extension. Configure your instance URL, review the name and pin, and choose whether to use your configured Google API key.
+- Keep the Maps draft through sign-in and retain the original Maps link on the saved place. Repeat saves open the existing card.
+- Read release history on the documentation site’s Changelog page.
+
+### Changed
+
+- Refresh the Menus plugin and the Journal and Checklist directory previews.
+- Publish the independently versioned Chrome extension ZIP alongside Placard release assets.
+
 ## [1.1.0] — 2026-11-16
 
 ### Added

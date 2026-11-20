@@ -41,6 +41,11 @@ export const DOC_NAV: DocNavGroup[] = [
     label: "Operate",
     items: [
       {
+        slug: "changelog",
+        title: "Changelog",
+        summary: "Release history and changes in each version.",
+      },
+      {
         slug: "backup-restore",
         title: "Backup and restore",
         summary: "Back up Compose or Coolify and rehearse recovery with real data.",
@@ -112,7 +117,14 @@ function slugFromPath(path: string): string {
   return file.replace(/\.md$/, "")
 }
 
+const changelog = import.meta.glob("../../../../CHANGELOG.md", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>
+
 const bySlug = new Map<string, string>()
+bySlug.set("changelog", Object.values(changelog)[0] ?? "")
 for (const [path, body] of Object.entries(rawModules)) {
   bySlug.set(slugFromPath(path), body)
 }

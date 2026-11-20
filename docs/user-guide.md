@@ -9,6 +9,18 @@ Open **Add**. Without a Google key, search OpenStreetMap by name and town, enter
 With a configured key, search for a place or select a point of interest on the Google
 map. Open the resulting card to add notes, tags, photos, or custom fields.
 
+## Save a place from Chrome
+
+Use a Placard instance that includes the **Save from Google Maps** review page.
+
+1. Download the Chrome extension ZIP from the [latest release](https://github.com/placard-app/core/releases/latest). Extract the Save to Placard extension ZIP into a folder you can keep. To build the ZIP from this checkout, run `pnpm install`, then `pnpm --filter @placard/chrome-extension build`. The versioned ZIP is in `apps/chrome-extension/dist/`.
+2. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the extracted folder containing `manifest.json`.
+3. Open a place in Google Maps and choose **Save to Placard** from Chrome’s extensions menu. On first use, enter the URL you normally use to open Placard, including any deployment path. Save the setting, return to Maps, and choose **Save to Placard** again. You can change the URL later in the extension’s options.
+4. In the Placard tab, sign in if prompted and check the name and pin. If the link contains only the map’s viewing position, find the place or enter its coordinates before saving.
+5. Choose **Save without Google** to add the place without an API request. If your instance has a Google key, you can instead choose **Look up details with Google**, review the match, then choose **Save with Google details**. A failed or budget-blocked lookup leaves the keyless option available.
+
+For a path-mounted instance, configure the extension with the same prefix as the web app. For example, a frontend built with Vite’s `--base /house/` and served by a proxy that strips `/house/` uses `https://places.example.com/house/`.
+
 ## Bring your Google saves
 
 1. Export your saved places through Google Takeout. Keep the downloaded ZIP.

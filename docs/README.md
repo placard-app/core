@@ -9,6 +9,8 @@ A private library for places you want to remember, revisit, and share with your 
 - [User guide](user-guide.md): add places, import Takeout, organize your library, and share.
 - [Google APIs](google-apis.md): optional enrichment and map picking with your own key.
 
+- [Changelog](https://placard.fyi/docs/changelog) includes the changes in each release.
+
 ## Run an instance
 
 - [Deployment](deployment.md): services, persistent volumes, and reverse proxies.

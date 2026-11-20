@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light dark;
+  font:
+    16px / 1.5 system-ui,
+    sans-serif;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 30rem;
+  margin: 4rem auto;
+  padding: 0 1.25rem;
+}
+.popup main {
+  width: 16rem;
+  margin: 1rem auto;
+}
+form {
+  display: grid;
+  gap: 0.75rem;
+}
+input,
+button {
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+}
+button {
+  justify-self: start;
+  cursor: pointer;
+}
