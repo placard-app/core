@@ -14,6 +14,7 @@ const docsDir = join(repoRoot, "docs")
 
 /** Keep in sync with apps/site/src/docs/catalog.ts DOC_NAV slugs. */
 const PUBLISHED = [
+  "changelog",
   "product-overview",
   "user-guide",
   "troubleshooting",
@@ -103,12 +104,18 @@ function pathExists(repoPath) {
 const errors = []
 const headingBySlug = new Map()
 for (const slug of PUBLISHED) {
-  const source = readFileSync(join(docsDir, `${slug}.md`), "utf8")
+  const source = readFileSync(
+    slug === "changelog" ? join(repoRoot, "CHANGELOG.md") : join(docsDir, `${slug}.md`),
+    "utf8",
+  )
   headingBySlug.set(slug, headingIdsFromMarkdown(source))
 }
 
 for (const slug of PUBLISHED) {
-  const source = readFileSync(join(docsDir, `${slug}.md`), "utf8")
+  const source = readFileSync(
+    slug === "changelog" ? join(repoRoot, "CHANGELOG.md") : join(docsDir, `${slug}.md`),
+    "utf8",
+  )
   const ids = headingBySlug.get(slug)
 
   for (const { href } of extractHrefs(source)) {
@@ -178,7 +185,9 @@ for (const slug of PUBLISHED) {
 
 // Sanity: published files exist; no orphan nav
 for (const slug of PUBLISHED) {
-  if (!existsSync(join(docsDir, `${slug}.md`))) {
+  if (
+    !existsSync(slug === "changelog" ? join(repoRoot, "CHANGELOG.md") : join(docsDir, `${slug}.md`))
+  ) {
     errors.push(`catalog slug missing file: docs/${slug}.md`)
   }
 }
