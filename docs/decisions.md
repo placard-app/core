@@ -73,7 +73,8 @@ Resolved choices from product discussion. Update this file when something change
 | **Production topology** | One app image: server serves `/api` + built SPA (same origin). Worker = same image, different command. |
 | **Local orchestration** | **Aspire** TypeScript AppHost (`aspire run`) for PostGIS + server + worker + Vite + dashboard/OTEL. |
 | **Self-host deploy** | Committed hand-maintained `compose.yaml` for Coolify/NAS. Aspire publish is optional (`PLACARD_COMPOSE_FROM_ASPIRE=1`); self-hosters never need the Aspire CLI. |
-| **Monorepo** | pnpm workspaces: `apps/server`, `apps/web`, `apps/site`, `packages/domain`, `packages/module-sdk`, `packages/modules/*`, `aspire-apphost`. |
+| **Marketing website** | Independent AstroWind repository: [placard-app/website](https://github.com/placard-app/website), deployed to GitHub Pages at `placard.fyi`. Core owns technical Markdown and release assets. |
+| **Monorepo** | pnpm workspaces: `apps/server`, `apps/web`, `packages/domain`, `packages/module-sdk`, `packages/modules/*`, `aspire-apphost`. |
 
 ## Implications
 

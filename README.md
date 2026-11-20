@@ -38,7 +38,7 @@ for Docker prerequisites, download-and-inspect instructions, automated options,
 manual Compose setup, upgrades, and backup. The installers use the latest published
 release assets.
 
-Nightly / tip-of-`main` install lives in a collapsed section of **[docs/install.md](docs/install.md)**. Google Maps Platform BYOK: **[docs/google-apis.md](docs/google-apis.md)**. The marketing site serves the same pages under `/docs`.
+Nightly / tip-of-`main` install lives in a collapsed section of **[docs/install.md](docs/install.md)**. Google Maps Platform BYOK: **[docs/google-apis.md](docs/google-apis.md)**. The [marketing website](https://github.com/placard-app/website) publishes reviewed snapshots of these pages under [placard.fyi/docs](https://placard.fyi/docs).
 
 ## Develop
 
