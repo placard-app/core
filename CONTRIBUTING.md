@@ -14,7 +14,7 @@ files and personal Takeout exports outside tracked fixtures.
 
 - `apps/web`: product UI; pages coordinate focused components.
 - `apps/server`: API, domain services, background jobs, database migrations.
-- `apps/site`: marketing and the published Markdown reading experience.
+- Marketing and public documentation reader: [placard-app/website](https://github.com/placard-app/website), an independent AstroWind repository.
 - `packages/domain`: shared schemas and API contracts.
 - `packages/module-sdk` and `packages/modules/skeleton`: plugin contracts and starter.
 - `docs`: canonical product, operator, and contributor documentation.
@@ -24,7 +24,7 @@ files and personal Takeout exports outside tracked fixtures.
 Run `pnpm typecheck` and `pnpm lint`. Use `pnpm test:unit` for logic,
 `pnpm test:integration` for database/API behavior, and `pnpm test:e2e` for user flows
 (build the web app first). Integration and browser tests need Docker.
-Run `pnpm --filter @placard/site build` for site or published-doc changes.
+For website changes, use the checks in [placard-app/website](https://github.com/placard-app/website). Public documentation stays in `docs/`; the website imports reviewed snapshots through update PRs.
 Use `pnpm check:recovery` for deployment or backup changes; it removes only its
 own randomly named disposable project's volumes.
 
