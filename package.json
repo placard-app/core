@@ -31,8 +31,8 @@
     "aspire:build": "pnpm --dir aspire-apphost run aspire:build"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.7",
-    "@playwright/test": "1.65.0",
+    "@biomejs/biome": "2.6.8",
+    "@playwright/test": "1.65.1",
     "typescript": "7.0.2"
   }
 }
