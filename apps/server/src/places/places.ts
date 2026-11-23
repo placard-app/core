@@ -97,7 +97,7 @@ export class Places extends Context.Service<
     readonly addFromGoogle: (
       ownerId: string,
       details: GooglePlaceDetails,
-      source: Extract<PlaceSource, "autocomplete" | "map_pick" | "takeout">,
+      source: Extract<PlaceSource, "autocomplete" | "map_pick" | "takeout" | "mcp">,
       options?: { readonly importRunId?: string },
     ) => Effect.Effect<SavedPlace>
     readonly addManual: (

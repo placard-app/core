@@ -1,12 +1,16 @@
+import { randomUUID } from "node:crypto"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { ManualPlaceInput, Me, PlaceStatus, SearchFilter } from "@placard/domain"
 import { moduleMcpToolName } from "@placard/module-sdk"
 import type { Effect } from "effect"
 import { z } from "zod"
+import type { GooglePlaces } from "../google/places.ts"
 import { type ModuleRuntime, moduleDataDir } from "../modules/loader.ts"
 import type { Modules } from "../modules/modules.ts"
+import type { Enrichment } from "../places/enrichment.ts"
 import type { Lists } from "../places/lists.ts"
 import type { Places } from "../places/places.ts"
+import { saveGooglePlace } from "../places/save-google.ts"
 import type { Search } from "../places/search.ts"
 import type { Tokens } from "../tokens/tokens.ts"
 
@@ -52,6 +56,8 @@ export type ToolContext = {
   readonly tokenSecret: string
   readonly publicUrl: URL
   readonly tokens: Tokens["Service"]
+  readonly google: GooglePlaces["Service"]
+  readonly enrichment: Enrichment["Service"]
   readonly places: Places["Service"]
   readonly search: Search["Service"]
   readonly lists: Lists["Service"]
@@ -102,6 +108,52 @@ export const zodFromJsonSchema = (schema: Record<string, unknown>) => {
 
 /** Register core MCP tools, then enabled module tools. */
 export const registerPlacardTools = async (server: McpServer, ctx: ToolContext) => {
+  server.registerTool(
+    "lookup_places",
+    {
+      description:
+        "Find Google place candidates by name and city. Resolve ambiguous branches before saving. Requires a configured Google API key.",
+      inputSchema: { text: z.string().trim().min(1).max(200), near: latLng.optional() },
+    },
+    async (args) => {
+      try {
+        const sessionToken = randomUUID()
+        const candidates = await withAudit(ctx, "lookup_places", args, () =>
+          ctx.run(
+            ctx.google.autocomplete({ input: args.text, near: args.near ?? null, sessionToken }),
+          ),
+        )
+        return textResult({ candidates, sessionToken })
+      } catch (cause) {
+        return errorResult(cause instanceof Error ? cause.message : String(cause))
+      }
+    },
+  )
+  server.registerTool(
+    "save_google_place",
+    {
+      description:
+        "Save a selected Google place candidate, reusing an existing saved place. Pass the lookup session token when available.",
+      inputSchema: { googlePlaceId: z.string().min(1), sessionToken: z.string().min(1).optional() },
+    },
+    async (args) => {
+      try {
+        return textResult(
+          await withAudit(ctx, "save_google_place", args, () =>
+            ctx.run(
+              saveGooglePlace(ctx, ctx.user, {
+                ...args,
+                sessionToken: args.sessionToken ?? null,
+                source: "mcp",
+              }),
+            ),
+          ),
+        )
+      } catch (cause) {
+        return errorResult(cause instanceof Error ? cause.message : String(cause))
+      }
+    },
+  )
   server.registerTool(
     "search_places",
     {
@@ -252,6 +304,8 @@ export const registerPlacardTools = async (server: McpServer, ctx: ToolContext) 
   )
 
   const registered = new Set<string>([
+    "lookup_places",
+    "save_google_place",
     "search_places",
     "get_place",
     "create_place",

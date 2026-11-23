@@ -2,8 +2,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"
 import type { Me } from "@placard/domain"
 import { Effect, Result } from "effect"
+import type { GooglePlaces } from "../google/places.ts"
 import type { ModuleRuntime } from "../modules/loader.ts"
 import type { Modules } from "../modules/modules.ts"
+import type { Enrichment } from "../places/enrichment.ts"
 import type { Lists } from "../places/lists.ts"
 import type { Places } from "../places/places.ts"
 import type { Search } from "../places/search.ts"
@@ -17,6 +19,8 @@ export type McpDeps = {
   readonly mcpEnabled: boolean
   readonly publicUrl: URL
   readonly tokens: Tokens["Service"]
+  readonly google: GooglePlaces["Service"]
+  readonly enrichment: Enrichment["Service"]
   readonly places: Places["Service"]
   readonly search: Search["Service"]
   readonly lists: Lists["Service"]
@@ -94,6 +98,8 @@ export const handleMcpRequest = (deps: McpDeps, request: Request): Promise<Respo
           tokenSecret: secret,
           publicUrl: deps.publicUrl,
           tokens: deps.tokens,
+          google: deps.google,
+          enrichment: deps.enrichment,
           places: deps.places,
           search: deps.search,
           lists: deps.lists,

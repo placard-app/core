@@ -6,6 +6,7 @@ import { GooglePlaces } from "../google/places.ts"
 import { Enrichment } from "../places/enrichment.ts"
 import { Lists } from "../places/lists.ts"
 import { Places } from "../places/places.ts"
+import { saveGooglePlace } from "../places/save-google.ts"
 import { Tags } from "../places/tags.ts"
 import { InstanceSettings } from "../settings/instance-settings.ts"
 
@@ -30,18 +31,7 @@ export const PlacesApiLive = HttpApiBuilder.group(
       .handle("addFromGoogle", ({ payload }) =>
         Effect.gen(function* () {
           const me = yield* CurrentUser
-          const existing = yield* places.findByGooglePlaceId(me.id, payload.googlePlaceId)
-          if (Option.isSome(existing)) return { place: existing.value, created: false }
-          const details = yield* google.details(payload.googlePlaceId, payload.sessionToken)
-          const saved = yield* places.addFromGoogle(me.id, details, payload.source)
-          if (saved.created) {
-            yield* enrichment.applyDetails(me.id, saved.place.id, details).pipe(Effect.orDie)
-            const place = yield* places
-              .get(me.id, saved.place.id, me.householdEnabled)
-              .pipe(Effect.orDie)
-            return { place, created: true }
-          }
-          return saved
+          return yield* saveGooglePlace({ places, google, enrichment }, me, payload)
         }),
       )
       .handle("addManual", ({ payload }) => withMe((me) => places.addManual(me.id, payload)))
