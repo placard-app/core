@@ -1,9 +1,11 @@
 import { Effect, Layer } from "effect"
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http"
 import { AppConfig } from "../config.ts"
+import { GooglePlaces } from "../google/places.ts"
 import { handleMcpRequest } from "../mcp/server.ts"
 import { ModuleRuntime } from "../modules/loader.ts"
 import { Modules } from "../modules/modules.ts"
+import { Enrichment } from "../places/enrichment.ts"
 import { Lists } from "../places/lists.ts"
 import { Places } from "../places/places.ts"
 import { Search } from "../places/search.ts"
@@ -16,6 +18,8 @@ export const McpRoutesLive = HttpRouter.use(
   Effect.fn(function* (router) {
     const config = yield* AppConfig
     const tokens = yield* Tokens
+    const google = yield* GooglePlaces
+    const enrichment = yield* Enrichment
     const places = yield* Places
     const search = yield* Search
     const lists = yield* Lists
@@ -26,6 +30,8 @@ export const McpRoutesLive = HttpRouter.use(
       mcpEnabled: config.mcpEnabled,
       publicUrl: config.publicUrl,
       tokens,
+      google,
+      enrichment,
       places,
       search,
       lists,

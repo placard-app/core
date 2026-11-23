@@ -1,3 +1,7 @@
+import { randomUUID } from "node:crypto"
+import { readdir, readFile, stat } from "node:fs/promises"
+import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 import { expect, layer } from "@effect/vitest"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
@@ -133,6 +137,8 @@ layer(TestApp.layer, { concurrent: false, timeout: 120_000 })("mcp", (it) => {
       const names = tools.tools.map((t) => t.name).sort()
       expect(names).toEqual(
         [
+          "lookup_places",
+          "save_google_place",
           "add_to_list",
           "create_place",
           "get_place",
@@ -141,6 +147,22 @@ layer(TestApp.layer, { concurrent: false, timeout: 120_000 })("mcp", (it) => {
           "set_status",
         ].sort(),
       )
+
+      const lookup = await client.callTool({
+        name: "lookup_places",
+        arguments: { text: "Maison Sureau Brussels" },
+      })
+      expect(lookup.isError).toBe(true)
+      const saveMissingKey = await client.callTool({
+        name: "save_google_place",
+        arguments: { googlePlaceId: "missing-key-fixture" },
+      })
+      expect(saveMissingKey.isError).toBe(true)
+      const manual = await client.callTool({
+        name: "create_place",
+        arguments: { name: "Manual MCP café", category: "cafe", lat: 50.85, lng: 4.35 },
+      })
+      expect(manual.isError).toBeFalsy()
 
       const search = await client.callTool({
         name: "search_places",
@@ -162,9 +184,45 @@ layer(TestApp.layer, { concurrent: false, timeout: 120_000 })("mcp", (it) => {
       })
       expect(status.isError).toBeFalsy()
 
+      const wanted = await client.callTool({
+        name: "search_places",
+        arguments: { status: "want_to_go" },
+      })
+      expect(JSON.stringify(wanted.content)).toContain("Da Michele")
+      expect(JSON.stringify(wanted.content)).not.toContain("Manual MCP café")
+
       const got = await client.callTool({ name: "get_place", arguments: { id: placeId } })
       expect(got.isError).toBeFalsy()
       expect((got.content as { text: string }[])[0]?.text).toContain("want_to_go")
+
+      expect(
+        (
+          await admin.browser.send("PUT", "/api/admin/settings/google-api-key", {
+            apiKey: "AIza-good-key-9876",
+          })
+        ).status,
+      ).toBe(200)
+      const candidates = await client.callTool({
+        name: "lookup_places",
+        arguments: { text: "Sperl" },
+      })
+      expect(candidates.isError).toBeFalsy()
+      expect(JSON.stringify(candidates.content)).toContain("ChIJ-fixture-cafe-sperl")
+      expect(JSON.stringify(candidates.content)).toContain("sessionToken")
+      const googleArgs = { googlePlaceId: "ChIJ-fixture-cafe-sperl" }
+      const saved = await client.callTool({ name: "save_google_place", arguments: googleArgs })
+      expect(saved.isError).toBeFalsy()
+      expect((saved.content as { text: string }[])[0]?.text).toContain('"created": true')
+      expect((saved.content as { text: string }[])[0]?.text).toContain('"source": "mcp"')
+      const duplicate = await client.callTool({ name: "save_google_place", arguments: googleArgs })
+      expect(duplicate.isError).toBeFalsy()
+      expect((duplicate.content as { text: string }[])[0]?.text).toContain('"created": false')
+      const failed = await client.callTool({
+        name: "save_google_place",
+        arguments: { googlePlaceId: "unknown-provider-place" },
+      })
+      expect(failed.isError).toBe(true)
+      await admin.browser.send("DELETE", "/api/admin/settings/google-api-key")
 
       await client.close()
     }),
@@ -229,6 +287,71 @@ export function createModule() {
       await client.connect(transport)
       expect((await client.listTools()).tools.map((t) => t.name)).not.toContain("demo_mcp__ping")
       await client.close()
+    }),
+  )
+
+  it.effect("bundled Menus saves structured menu data and respects MCP toggle", () =>
+    run(async (app) => {
+      const root = fileURLToPath(new URL("../../bundled-plugins/places.menus/", import.meta.url))
+      const files: Record<string, Uint8Array> = {}
+      for (const name of await readdir(root, { recursive: true })) {
+        if ((await stat(join(root, name))).isFile()) files[name] = await readFile(join(root, name))
+      }
+      expect(
+        (
+          await admin.browser.send("POST", "/api/modules/upload", {
+            filename: "menus.zip",
+            contentBase64: Buffer.from(zipSync(files)).toString("base64"),
+          })
+        ).status,
+      ).toBe(200)
+      const client = new Client({ name: "menu-test", version: "0.0.0" })
+      await client.connect(
+        new StreamableHTTPClientTransport(new URL("/mcp", app.publicUrl), {
+          fetch: mcpFetch(app, secret),
+        }),
+      )
+      const saved = await client.callTool({
+        name: "places_menus__save_menu",
+        arguments: {
+          placeId,
+          requestId: randomUUID(),
+          menu: {
+            name: "Dinner",
+            currency: "EUR",
+            sections: [
+              {
+                name: "Mains",
+                items: [
+                  { name: "Roasted pumpkin", price: "18" },
+                  { name: "Mushroom risotto", price: "24" },
+                ],
+              },
+            ],
+          },
+        },
+      })
+      expect(saved.isError).toBeFalsy()
+      const menus = await client.callTool({
+        name: "places_menus__get_menus",
+        arguments: { placeId },
+      })
+      expect(JSON.stringify(menus.content)).toContain("Mushroom risotto")
+      await client.close()
+      expect(
+        (await admin.browser.send("PATCH", "/api/modules/me/places.menus/mcp", { enabled: false }))
+          .status,
+      ).toBe(200)
+      const disabled = new Client({ name: "menu-disabled", version: "0.0.0" })
+      await disabled.connect(
+        new StreamableHTTPClientTransport(new URL("/mcp", app.publicUrl), {
+          fetch: mcpFetch(app, secret),
+        }),
+      )
+      expect((await disabled.listTools()).tools.map((tool) => tool.name)).not.toContain(
+        "places_menus__save_menu",
+      )
+      await disabled.close()
     }),
   )
 
